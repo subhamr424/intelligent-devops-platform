@@ -1,0 +1,141 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: intelligent-platform
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app.kubernetes.io/name: "intelligent-platform"
+    app.kubernetes.io/part-of: "intelligent-platform"
+spec:
+  replicas: {{ .Values.replicaCount }}
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: "intelligent-platform"
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: "intelligent-platform"
+        app.kubernetes.io/part-of: "intelligent-platform"
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      securityContext:
+        runAsNonRoot: {{ .Values.pod.securityContext.runAsNonRoot }}
+        runAsUser: {{ .Values.pod.securityContext.runAsUser }}
+        runAsGroup: {{ .Values.pod.securityContext.runAsGroup }}
+        fsGroup: {{ .Values.pod.securityContext.fsGroup }}
+      containers:
+        - name: backend
+          image: "{{ .Values.image.backend.repository }}:{{ .Values.image.backend.tag }}"
+          imagePullPolicy: {{ .Values.image.backend.pullPolicy }}
+          ports:
+            - name: http-backend
+              containerPort: 8090
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              valueFrom:
+                configMapKeyRef:
+                  name: intelligent-platform-config
+                  key: BACKEND_SPRING_PROFILES_ACTIVE
+            - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
+              valueFrom:
+                configMapKeyRef:
+                  name: intelligent-platform-config
+                  key: BACKEND_MANAGEMENT_ENDPOINTS
+            - name: SERVER_PORT
+              value: "8090"
+            - name: APP_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: intelligent-platform-secret
+                  key: APP_SECRET_KEY
+            - name: X_CORRELATION_HEADER
+              value: "{{ .Values.tracing.correlationHeader }}"
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.backend.liveness.path }}
+              port: {{ .Values.backend.liveness.port }}
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 6
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.backend.readiness.path }}
+              port: {{ .Values.backend.readiness.port }}
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 6
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8090
+            failureThreshold: 30
+            periodSeconds: 2
+          resources:
+            requests:
+              cpu: {{ .Values.resources.requests.cpu }}
+              memory: {{ .Values.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.resources.limits.cpu }}
+              memory: {{ .Values.resources.limits.memory }}
+          securityContext:
+            allowPrivilegeEscalation: {{ .Values.pod.container.securityContext.allowPrivilegeEscalation }}
+            readOnlyRootFilesystem: {{ .Values.pod.container.securityContext.readOnlyRootFilesystem }}
+            capabilities:
+              drop: {{ .Values.pod.container.securityContext.capabilities.drop }}
+        - name: frontend
+          image: "{{ .Values.image.frontend.repository }}:{{ .Values.image.frontend.tag }}"
+          imagePullPolicy: {{ .Values.image.frontend.pullPolicy }}
+          ports:
+            - name: http-frontend
+              containerPort: 3000
+          env:
+            - name: REACT_APP_API_BASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: intelligent-platform-config
+                  key: FRONTEND_API_BASE_URL
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 6
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 6
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            failureThreshold: 30
+            periodSeconds: 2
+          resources:
+            requests:
+              cpu: {{ .Values.resources.requests.cpu }}
+              memory: {{ .Values.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.resources.limits.cpu }}
+              memory: {{ .Values.resources.limits.memory }}
+          securityContext:
+            allowPrivilegeEscalation: {{ .Values.pod.container.securityContext.allowPrivilegeEscalation }}
+            readOnlyRootFilesystem: {{ .Values.pod.container.securityContext.readOnlyRootFilesystem }}
+            capabilities:
+              drop: {{ .Values.pod.container.securityContext.capabilities.drop }}
+      terminationGracePeriodSeconds: 30
+      restartPolicy: Always
+

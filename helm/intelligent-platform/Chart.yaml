@@ -1,0 +1,18 @@
+apiVersion: v2
+name: intelligent-platform
+description: Production-grade DevOps platform (backend + frontend) for Intelligent DevOps Platform
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+
+keywords:
+  - devops
+  - platform
+  - ci-cd
+  - gitops
+  - k8s
+
+maintainers:
+  - name: intelligent-devops-platform
+    email: devops@example.com
+

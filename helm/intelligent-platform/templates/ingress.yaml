@@ -1,0 +1,37 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: intelligent-platform
+  namespace: {{ .Values.global.namespace }}
+  annotations:
+    kubernetes.io/ingress.class: "{{ .Values.ingress.className }}"
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/service.port: "{{ .Values.service.frontend.port }}"
+spec:
+  rules:
+    - host: {{ .Values.ingress.host }}
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: intelligent-platform-backend
+                port:
+                  number: {{ .Values.service.backend.port }}
+          - path: /actuator
+            pathType: Prefix
+            backend:
+              service:
+                name: intelligent-platform-backend
+                port:
+                  number: {{ .Values.service.backend.port }}
+          - path: {{ .Values.ingress.path }}
+            pathType: Prefix
+            backend:
+              service:
+                name: intelligent-platform-frontend
+                port:
+                  number: {{ .Values.service.frontend.port }}
+

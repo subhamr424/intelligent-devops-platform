@@ -1,0 +1,8 @@
+* @intelligent-devops-platform/ops
+helm/* @intelligent-devops-platform/helm
+backend/* @intelligent-devops-platform/backend
+frontend/* @intelligent-devops-platform/frontend
+jenkins/* @intelligent-devops-platform/ci
+scripts/* @intelligent-devops-platform/ops
+monitoring/* @intelligent-devops-platform/observability
+

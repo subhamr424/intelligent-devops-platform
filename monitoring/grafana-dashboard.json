@@ -1,0 +1,79 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {"defaults": {"custom": {"drawStyle": "line", "lineWidth": 1}, "unit": "short"}},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "id": 1,
+      "options": {"legend": {"showLegend": true}},
+      "targets": [
+        {
+          "expr": "rate(http_server_requests_seconds_count{namespace=\"intelligent-platform\",uri=~\"/actuator.*\"}[5m])",
+          "legendFormat": "actuator"
+        }
+      ],
+      "title": "Backend actuator request rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "id": 2,
+      "options": {"legend": {"showLegend": true}},
+      "targets": [
+        {
+          "expr": "rate(jvm_memory_used_bytes{namespace=\"intelligent-platform\"}[5m])",
+          "legendFormat": "jvm memory"
+        }
+      ],
+      "title": "JVM memory used (bytes rate proxy)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "id": 3,
+      "options": {"legend": {"showLegend": true}},
+      "targets": [
+        {
+          "expr": "sum(rate(process_cpu_usage{namespace=\"intelligent-platform\"}[5m])) by (pod)",
+          "legendFormat": "cpu"
+        }
+      ],
+      "title": "CPU usage per pod",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": ["intelligent-platform"],
+  "templating": {"list": []},
+  "time": {"from": "now-6h", "to": "now"},
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Intelligent Platform - Observability",
+  "uid": "intelligent-platform",
+  "version": 1,
+  "weekStart": "monday"
+}
+

@@ -1,0 +1,11 @@
+Intelligent Platform deployed.
+
+Backend:
+  - Metrics: http://{{ .Values.ingress.host }}/actuator/prometheus (via backend route)
+  - Health: http://{{ .Values.ingress.host }}/actuator/health
+
+Frontend:
+  - http://{{ .Values.ingress.host }}/
+
+namespace: {{ .Values.global.namespace }}
+

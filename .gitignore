@@ -1,0 +1,39 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# Node
+node_modules/
+.next/
+out/
+/dist/
+
+# Java
+*.class
+*.log
+target/
+
+# Maven
+.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# Env
+.env
+.env.*
+
+# Helm
+*.tgz
+
+# Misc
+*.swp
+*.swo
+
+# Secrets
+**/secrets*.yaml
+

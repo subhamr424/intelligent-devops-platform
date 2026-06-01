@@ -1,0 +1,29 @@
+body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #0b1220; color: #e6edf3; }
+.page { min-height: 100vh; padding: 20px; max-width: 1100px; margin: 0 auto; }
+.header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 18px; }
+.title { font-size: 22px; font-weight: 700; letter-spacing: 0.2px; }
+.subtitle { opacity: 0.75; margin-top: 4px; }
+.status { display: flex; align-items: center; }
+.pill { padding: 8px 12px; border-radius: 999px; font-weight: 700; font-size: 12px; border: 1px solid rgba(255,255,255,0.12); }
+.pill.up { background: rgba(34,197,94,0.15); color: #34d399; }
+.pill.down { background: rgba(239,68,68,0.15); color: #f87171; }
+.grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; }
+.card { grid-column: span 12; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 14px; }
+.cardTitle { font-weight: 700; margin-bottom: 8px; }
+.cardBody { font-size: 14px; }
+@media (min-width: 900px) {
+  .card { grid-column: span 4; }
+}
+.kv { display: flex; flex-direction: column; gap: 8px; }
+.kvRow { display: flex; justify-content: space-between; gap: 12px; }
+.kvRow span:first-child { opacity: 0.75; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size: 12px; }
+.muted { opacity: 0.72; }
+.errorBox { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.35); border-radius: 14px; padding: 12px; margin-bottom: 14px; }
+.errorTitle { font-weight: 800; margin-bottom: 6px; }
+.errorText { opacity: 0.9; font-size: 13px; }
+.links { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.links a { color: #93c5fd; text-decoration: none; }
+.links a:hover { text-decoration: underline; }
+.footer { margin-top: 20px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.08); }
+

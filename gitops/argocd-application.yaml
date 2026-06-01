@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: intelligent-platform
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: "https://github.com/subham601/intelligent-devops-platform.git"
+    targetRevision: HEAD
+    path: "helm/intelligent-platform"
+    helm:
+      valueFiles:
+        - values.yaml
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: intelligent-platform
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - RespectIgnoreDifferences=true
+

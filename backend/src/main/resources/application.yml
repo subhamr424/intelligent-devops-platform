@@ -1,0 +1,34 @@
+server:
+  port: ${SERVER_PORT:8090}
+
+build:
+  version: ${BUILD_VERSION:unknown}
+  commit: ${BUILD_COMMIT:unknown}
+  branch: ${BUILD_BRANCH:unknown}
+  timestamp: ${BUILD_TIMESTAMP:unknown}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: ${MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE:health,metrics,info}
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always
+
+springdoc:
+  api-docs:
+    enabled: true
+
+tracing:
+  correlationHeader: ${X_CORRELATION_HEADER:X-Correlation-Id}
+
+logging:
+  level:
+    root: INFO
+  pattern:
+    console: "%m%n"
+
+

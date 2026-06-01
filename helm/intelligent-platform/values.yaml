@@ -1,0 +1,103 @@
+global:
+  namespace: intelligent-platform
+
+image:
+  backend:
+    repository: shubham379/intelligent-devops-platform/backend
+    tag: "v0.0.0"
+    pullPolicy: IfNotPresent
+  frontend:
+    repository: shubham379/intelligent-devops-platform/frontend
+    tag: "v0.0.0"
+    pullPolicy: IfNotPresent
+
+replicaCount: 2
+
+service:
+  backend:
+    port: 8090
+    targetPort: 8090
+  frontend:
+    port: 80
+    targetPort: 3000
+
+ingress:
+  enabled: true
+  className: traefik
+  host: intelligent-platform.local
+  path: /
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "256Mi"
+  limits:
+    cpu: "500m"
+    memory: "512Mi"
+
+pod:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 10001
+    runAsGroup: 10001
+    fsGroup: 10001
+    seccompProfile:
+      type: RuntimeDefault
+  container:
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop: ["ALL"]
+
+backend:
+  env:
+    SPRING_PROFILES_ACTIVE: "prod"
+    MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,metrics,info"
+    SERVER_PORT: "8090"
+  liveness:
+    path: /actuator/health/liveness
+    port: 8090
+  readiness:
+    path: /actuator/health/readiness
+    port: 8090
+
+frontend:
+  env:
+    REACT_APP_API_BASE_URL: "http://intelligent-platform.local/api"
+
+hpa:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 75
+  targetMemoryUtilizationPercentage: 80
+
+networkPolicy:
+  enabled: true
+  allowFrom:
+    - namespaceSelector: {}
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: "intelligent-platform"
+
+serviceAccount:
+  create: true
+  name: "intelligent-platform"
+
+tracing:
+  correlationHeader: X-Correlation-Id
+
+monitoring:
+  enabled: true
+  servicemonitor:
+    backend:
+      path: /actuator/prometheus
+      port: 8090
+      interval: 15s
+      scrapeTimeout: 5s
+
+security:
+  enableSecrets: true
+  appSecretKey: "change-me"
+

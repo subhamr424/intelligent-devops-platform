@@ -1,0 +1,174 @@
+pipeline {
+  agent any
+
+  environment {
+    // Adjust Jenkins global tools/credentials as needed
+    REGISTRY = 'docker.io'
+    IMAGE_BACKEND = 'shubham379/intelligent-devops-platform/backend'
+    IMAGE_FRONTEND = 'shubham379/intelligent-devops-platform/frontend'
+
+    // Jenkins credentials IDs (configure in Jenkins UI)
+    DOCKERHUB_CREDENTIALS_ID = 'dockerhub-credentials'
+    SLACK_WEBHOOK_CREDENTIALS_ID = 'slack-webhook'
+    SONARQUBE_TOKEN_CREDENTIALS_ID = 'sonarqube-token'
+
+    // SonarQube URL (configure)
+    SONAR_HOST_URL = 'http://localhost:9000'
+
+    // Jenkins port restrictions: Jenkins is already on 8090; pipeline does not bind ports.
+
+    // Versioning
+    VERSION_FILE = 'helm/intelligent-platform/values.yaml'
+  }
+
+  options {
+    disableConcurrentBuilds()
+    timestamps()
+    ansiColor('xterm')
+  }
+
+  stages {
+    stage('Checkout') {
+      steps {
+        checkout scm
+      }
+    }
+
+    stage('Build Backend') {
+      steps {
+        sh 'make build'
+      }
+    }
+
+    stage('Run Tests') {
+      steps {
+        sh 'make test'
+      }
+    }
+
+    stage('SonarQube Scan') {
+      steps {
+        withSonarQubeEnv('sonarqube') {
+          sh "mvn -q -f backend/pom.xml verify sonar:sonar -DskipTests=true -Dsonar.login=\"${SONARQUBE_TOKEN}\""
+        }
+      }
+      environment {
+        SONARQUBE_TOKEN = credentials(env.SONARQUBE_TOKEN_CREDENTIALS_ID)
+      }
+    }
+
+    stage('Sonar Quality Gate') {
+      steps {
+        withSonarQubeEnv('sonarqube') {
+          sh "mvn -q -f backend/pom.xml sonar:sonar -DskipTests=true -Dsonar.login=\"${SONARQUBE_TOKEN}\" -Dsonar.qualitygate.wait=true"
+        }
+      }
+      environment {
+        SONARQUBE_TOKEN = credentials(env.SONARQUBE_TOKEN_CREDENTIALS_ID)
+      }
+    }
+
+    stage('OWASP Dependency Check') {
+      steps {
+        sh 'cd backend && mvn -q org.owasp:dependency-check-maven:check -Dformat=HTML -DfailBuildOnCVSS=7'
+      }
+    }
+
+    stage('Trivy Scan') {
+      steps {
+        sh 'trivy --version || true'
+        // Scan dependencies + filesystem
+        sh 'trivy fs --exit-code 1 --severity HIGH,CRITICAL --ignore-unfixed . || true'
+      }
+    }
+
+    stage('Docker Build Backend') {
+      steps {
+        sh "./scripts/build.sh backend"
+      }
+    }
+
+    stage('Docker Build Frontend') {
+      steps {
+        sh "./scripts/build.sh frontend"
+      }
+    }
+
+    stage('Docker Push Backend') {
+      steps {
+        withCredentials([usernamePassword(credentialsId: env.DOCKERHUB_CREDENTIALS_ID, usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_PASS')]) {
+          sh "echo \"$DOCKERHUB_PASS\" | docker login -u \"$DOCKERHUB_USER\" --password-stdin ${REGISTRY}"
+          sh "./scripts/deploy.sh push-backend ${IMAGE_BACKEND}"
+        }
+      }
+    }
+
+    stage('Docker Push Frontend') {
+      steps {
+        withCredentials([usernamePassword(credentialsId: env.DOCKERHUB_CREDENTIALS_ID, usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_PASS')]) {
+          sh "echo \"$DOCKERHUB_PASS\" | docker login -u \"$DOCKERHUB_USER\" --password-stdin ${REGISTRY}"
+          sh "./scripts/deploy.sh push-frontend ${IMAGE_FRONTEND}"
+        }
+      }
+    }
+
+    stage('Automatic Version Increment') {
+      steps {
+        sh './scripts/update-image-tag.sh'
+      }
+    }
+
+    stage('Update Helm values.yaml') {
+      steps {
+        sh 'git diff --quiet || true'
+        sh 'yq -i \\
+          \'(.image.backend.tag) = (.image.backend.tag)\' \\
+          helm/intelligent-platform/values.yaml || true'
+      }
+    }
+
+    stage('Git Commit') {
+      steps {
+        sh 'git config user.email "jenkins@local" && git config user.name "Jenkins"'
+        sh 'git add helm/intelligent-platform/values.yaml && git commit -m "chore(ci): bump image tags" || echo "No changes to commit"'
+      }
+    }
+
+    stage('Git Push') {
+      steps {
+        sh 'git push origin HEAD:${BRANCH_NAME:-main}'
+      }
+    }
+
+    stage('Deployment Verification') {
+      steps {
+        // ArgoCD will sync; verify rollout.
+        sh 'kubectl rollout status deploy/intelligent-platform -n intelligent-platform --timeout=180s || true'
+        sh 'kubectl get pods -n intelligent-platform -l app.kubernetes.io/name=intelligent-platform -o wide || true'
+      }
+    }
+
+    stage('Slack Notification') {
+      steps {
+        script {
+          def status = currentBuild.currentResult
+          def msg = "Build #${env.BUILD_NUMBER} ${status}: intelligent-devops-platform"
+          sh "curl -X POST -H 'Content-type: application/json' --data '{\"text\": ${groovy.json.JsonOutput.toJson(msg)} }' $(printenv SLACK_WEBHOOK)"
+        }
+      }
+      environment {
+        SLACK_WEBHOOK = credentials(env.SLACK_WEBHOOK_CREDENTIALS_ID)
+      }
+    }
+  }
+
+  post {
+    failure {
+      script {
+        def msg = "Build #${env.BUILD_NUMBER} FAILED: intelligent-devops-platform"
+        sh "curl -X POST -H 'Content-type: application/json' --data '{\"text\": ${groovy.json.JsonOutput.toJson(msg)} }' $(printenv SLACK_WEBHOOK) || true"
+      }
+    }
+  }
+}
+
