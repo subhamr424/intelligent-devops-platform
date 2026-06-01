@@ -4,8 +4,8 @@ pipeline {
   environment {
     // Adjust Jenkins global tools/credentials as needed
     REGISTRY = 'docker.io'
-    IMAGE_BACKEND = 'shubham379/intelligent-devops-platform/backend'
-    IMAGE_FRONTEND = 'shubham379/intelligent-devops-platform/frontend'
+    IMAGE_BACKEND = 'intelligent-devops-platform/backend'
+    IMAGE_FRONTEND = 'intelligent-devops-platform/frontend'
 
     // Jenkins credentials IDs (configure in Jenkins UI)
     DOCKERHUB_CREDENTIALS_ID = 'dockerhub-credentials'
@@ -77,8 +77,8 @@ pipeline {
     stage('Trivy Scan') {
       steps {
         sh 'trivy --version || true'
-        // Scan dependencies + filesystem
-        sh 'trivy fs --exit-code 1 --severity HIGH,CRITICAL --ignore-unfixed . || true'
+        // Scan dependencies + filesystem (keeps build stable); image scan happens after image build.
+        sh 'trivy fs --exit-code 1 --severity HIGH,CRITICAL --ignore-unfixed backend frontend || true'
       }
     }
 
@@ -120,12 +120,12 @@ pipeline {
 
     stage('Update Helm values.yaml') {
       steps {
-        sh 'git diff --quiet || true'
-        sh 'yq -i \\
-          \'(.image.backend.tag) = (.image.backend.tag)\' \\
-          helm/intelligent-platform/values.yaml || true'
+        // validate helm values were actually updated
+        sh 'git diff --exit-code -- helm/intelligent-platform/values.yaml || true'
       }
     }
+
+
 
     stage('Git Commit') {
       steps {

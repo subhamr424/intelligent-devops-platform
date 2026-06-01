@@ -96,8 +96,13 @@ monitoring:
       port: 8090
       interval: 15s
       scrapeTimeout: 5s
+  servicemonitorCRDRequired: false
+
 
 security:
   enableSecrets: true
+  # IMPORTANT: set via CI/CD or manually override before production use.
+  # For GitOps/ArgoCD, prefer using external secret manager integration.
   appSecretKey: "change-me"
+
 

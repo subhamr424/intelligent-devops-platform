@@ -1,15 +1,14 @@
 # TODO - intelligent-devops-platform
 
-- [x] Create meta repository files: CODEOWNERS, .gitignore, Makefile, docker-compose.yml, README.md.
-- [ ] Create required directory structure: backend/, frontend/, helm/intelligent-platform/, gitops/, jenkins/, scripts/, monitoring/, docs/.
-- [ ] Create Helm chart skeleton + production templates.
-- [ ] Create GitOps (ArgoCD Application) manifests.
-- [ ] Create Jenkins pipeline (jenkins/Jenkinsfile) + helper scripts.
-- [ ] Create monitoring assets: Grafana dashboard json, ServiceMonitor, alert rules/values.
-- [ ] Implement backend (Spring Boot, Java 17) + Dockerfile + README.
-- [ ] Implement frontend (React) + Dockerfile + README.
-- [ ] Implement scripts: build.sh, deploy.sh, rollback.sh, update-image-tag.sh.
-- [ ] Implement CI/CD version bump + Helm values.yaml update.
-- [ ] Add security: non-root, NetworkPolicy, Secret, container hardening, resource requests/limits.
-- [ ] Add observability: metrics endpoint, readiness/liveness/startup probes, Loki log labels (JSON logs).
-- [ ] Final: run lint/build/test commands (where feasible) and ensure manifests are consistent.
+- [ ] Fix frontend Dockerfile to include public/ and src/ in React build
+- [ ] Verify frontend Docker build succeeds: docker build -t intelligent-devops-platform-frontend:test ./frontend
+- [ ] Verify backend Docker build succeeds: docker build -t intelligent-devops-platform-backend:test ./backend
+- [ ] Verify container startup + health: curl http://localhost:9000/actuator/health returns UP
+- [ ] Verify frontend container serves UI: docker run -p 8085:80 and check root loads
+- [ ] Helm chart hardening fixes (probes/resources/secret/ingress/service/hpa/servicemonitor)
+- [ ] Verify helm lint and helm template pass
+- [ ] Jenkins pipeline review: ensure stages + image naming/versioning logic works
+- [ ] GitOps validation: argo sync prune selfHeal etc
+- [ ] Remove placeholders throughout repo (URLs/image names)
+- [ ] Produce final production readiness report with results + blockers + score
+

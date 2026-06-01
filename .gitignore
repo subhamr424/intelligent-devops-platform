@@ -37,3 +37,4 @@ target/
 # Secrets
 **/secrets*.yaml
 
+frontend/build/
