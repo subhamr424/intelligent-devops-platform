@@ -31,7 +31,11 @@ spec:
         fsGroup: {{ .Values.pod.securityContext.fsGroup }}
       containers:
         - name: backend
+
           image: "{{ .Values.image.backend.repository }}:{{ .Values.image.backend.tag }}"
+          volumeMounts:
+            - name: backend-tmp
+              mountPath: /tmp
           imagePullPolicy: {{ .Values.image.backend.pullPolicy }}
           ports:
             - name: http-backend
@@ -95,33 +99,40 @@ spec:
           imagePullPolicy: {{ .Values.image.frontend.pullPolicy }}
           ports:
             - name: http-frontend
-              containerPort: 3000
+              containerPort: 80
           env:
             - name: REACT_APP_API_BASE_URL
               valueFrom:
                 configMapKeyRef:
                   name: intelligent-platform-config
                   key: FRONTEND_API_BASE_URL
+          # Frontend image is hardened (readOnlyRootFilesystem=true). Nginx needs writable dirs.
+          volumeMounts:
+            - name: nginx-cache
+              mountPath: /var/cache/nginx
+            - name: nginx-run
+              mountPath: /run
+
           livenessProbe:
             httpGet:
-              path: /health
-              port: 3000
+              path: /
+              port: 80
             initialDelaySeconds: 20
             periodSeconds: 10
             timeoutSeconds: 2
             failureThreshold: 6
           readinessProbe:
             httpGet:
-              path: /health
-              port: 3000
+              path: /
+              port: 80
             initialDelaySeconds: 10
             periodSeconds: 5
             timeoutSeconds: 2
             failureThreshold: 6
           startupProbe:
             httpGet:
-              path: /health
-              port: 3000
+              path: /
+              port: 80
             failureThreshold: 30
             periodSeconds: 2
           resources:
@@ -136,6 +147,14 @@ spec:
             readOnlyRootFilesystem: {{ .Values.pod.container.securityContext.readOnlyRootFilesystem }}
             capabilities:
               drop: {{ .Values.pod.container.securityContext.capabilities.drop }}
+      volumes:
+        - name: backend-tmp
+          emptyDir: {}
+        - name: nginx-cache
+          emptyDir: {}
+        - name: nginx-run
+          emptyDir: {}
       terminationGracePeriodSeconds: 30
       restartPolicy: Always
+
 

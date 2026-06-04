@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import './styles.css';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 function useInterval(callback, delay) {
   const savedCallback = React.useRef(callback);
@@ -26,7 +26,7 @@ function Card({ title, children }) {
 }
 
 async function fetchJson(url) {
-  const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+  const res = await fetch(url, { headers: { Accept: 'application/json' } });
   const text = await res.text();
   if (!res.ok) {
     throw new Error(`Request failed (${res.status}): ${text}`);
@@ -42,7 +42,8 @@ export default function App() {
   const endpoints = useMemo(() => {
     return {
       health: `${API_BASE_URL}/health`,
-      build: `${API_BASE_URL}/build`
+      build: `${API_BASE_URL}/build`,
+
     };
   }, []);
 
@@ -91,9 +92,18 @@ export default function App() {
         <Card title="Health Status">
           {health ? (
             <div className="kv">
-              <div className="kvRow"><span>Status</span><span className="mono">{health.status}</span></div>
-              <div className="kvRow"><span>Correlation ID</span><span className="mono">{health.correlationId}</span></div>
-              <div className="kvRow"><span>Service</span><span className="mono">{health.service}</span></div>
+              <div className="kvRow">
+                <span>Status</span>
+                <span className="mono">{health.status}</span>
+              </div>
+              <div className="kvRow">
+                <span>Correlation ID</span>
+                <span className="mono">{health.correlationId}</span>
+              </div>
+              <div className="kvRow">
+                <span>Service</span>
+                <span className="mono">{health.service}</span>
+              </div>
             </div>
           ) : (
             <div className="muted">Loading...</div>
@@ -103,12 +113,30 @@ export default function App() {
         <Card title="Build Information">
           {buildInfo ? (
             <div className="kv">
-              <div className="kvRow"><span>Version</span><span className="mono">{buildInfo.version}</span></div>
-              <div className="kvRow"><span>Commit</span><span className="mono">{buildInfo.commit}</span></div>
-              <div className="kvRow"><span>Branch</span><span className="mono">{buildInfo.branch}</span></div>
-              <div className="kvRow"><span>Timestamp</span><span className="mono">{buildInfo.timestamp}</span></div>
-              <div className="kvRow"><span>Server Time</span><span className="mono">{buildInfo.serverTime}</span></div>
-              <div className="kvRow"><span>Correlation ID</span><span className="mono">{buildInfo.correlationId}</span></div>
+              <div className="kvRow">
+                <span>Version</span>
+                <span className="mono">{buildInfo.version}</span>
+              </div>
+              <div className="kvRow">
+                <span>Commit</span>
+                <span className="mono">{buildInfo.commit}</span>
+              </div>
+              <div className="kvRow">
+                <span>Branch</span>
+                <span className="mono">{buildInfo.branch}</span>
+              </div>
+              <div className="kvRow">
+                <span>Timestamp</span>
+                <span className="mono">{buildInfo.timestamp}</span>
+              </div>
+              <div className="kvRow">
+                <span>Server Time</span>
+                <span className="mono">{buildInfo.serverTime}</span>
+              </div>
+              <div className="kvRow">
+                <span>Correlation ID</span>
+                <span className="mono">{buildInfo.correlationId}</span>
+              </div>
             </div>
           ) : (
             <div className="muted">Loading...</div>
@@ -119,17 +147,27 @@ export default function App() {
           <div className="muted">
             <div>Use backend actuator and Prometheus metrics for monitoring.</div>
             <div className="links">
-              <a href="/actuator/health" target="_blank" rel="noreferrer">Actuator Health</a>
-              <a href="/actuator/prometheus" target="_blank" rel="noreferrer">Prometheus Metrics</a>
-              <a href="/" onClick={(e)=>e.preventDefault()}>Grafana (configured in cluster)</a>
-              <a href="/" onClick={(e)=>e.preventDefault()}>Loki (configured in cluster)</a>
+              <a href="/actuator/health" target="_blank" rel="noreferrer">
+                Actuator Health
+              </a>
+              <a href="/actuator/prometheus" target="_blank" rel="noreferrer">
+                Prometheus Metrics
+              </a>
+              <a href="/" onClick={(e) => e.preventDefault()}>
+                Grafana (configured in cluster)
+              </a>
+              <a href="/" onClick={(e) => e.preventDefault()}>
+                Loki (configured in cluster)
+              </a>
             </div>
           </div>
         </Card>
       </div>
 
       <footer className="footer">
-        <div className="muted">API base: <span className="mono">{API_BASE_URL}</span></div>
+        <div className="muted">
+          API base: <span className="mono">{API_BASE_URL}</span>
+        </div>
       </footer>
     </div>
   );

@@ -21,6 +21,7 @@ spec:
                 port:
                   number: {{ .Values.service.backend.port }}
           - path: /actuator
+
             pathType: Prefix
             backend:
               service:
