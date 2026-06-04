@@ -51,6 +51,12 @@ spec:
                 configMapKeyRef:
                   name: intelligent-platform-config
                   key: BACKEND_MANAGEMENT_ENDPOINTS
+            - name: MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: intelligent-platform-config
+                  key: BACKEND_MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED
+
             - name: SERVER_PORT
               value: "8090"
             - name: APP_SECRET_KEY

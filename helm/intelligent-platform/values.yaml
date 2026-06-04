@@ -47,7 +47,8 @@ pod:
 backend:
   env:
     SPRING_PROFILES_ACTIVE: prod
-    MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,metrics,info
+    MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,metrics,info,prometheus
+    MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED: "true"
     SERVER_PORT: '8090'
   liveness:
     path: /actuator/health/liveness
