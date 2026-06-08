@@ -37,23 +37,33 @@ async function fetchJson(url) {
 export default function App() {
   const [health, setHealth] = useState(null);
   const [buildInfo, setBuildInfo] = useState(null);
+  const [info, setInfo] = useState(null);
   const [error, setError] = useState(null);
 
   const endpoints = useMemo(() => {
+
     return {
       health: `${API_BASE_URL}/health`,
       build: `${API_BASE_URL}/build`,
+      info: `${API_BASE_URL}/info`,
 
     };
   }, []);
 
+
   async function refresh() {
     try {
       setError(null);
-      const [h, b] = await Promise.all([fetchJson(endpoints.health), fetchJson(endpoints.build)]);
+      const [h, b, i] = await Promise.all([
+        fetchJson(endpoints.health),
+        fetchJson(endpoints.build),
+        fetchJson(endpoints.info),
+      ]);
       setHealth(h);
       setBuildInfo(b);
+      setInfo(i);
     } catch (e) {
+
       setError(e.message || String(e));
     }
   }
@@ -147,19 +157,21 @@ export default function App() {
           <div className="muted">
             <div>Use backend actuator and Prometheus metrics for monitoring.</div>
             <div className="links">
+
               <a href="/actuator/health" target="_blank" rel="noreferrer">
                 Actuator Health
               </a>
               <a href="/actuator/prometheus" target="_blank" rel="noreferrer">
                 Prometheus Metrics
               </a>
-              <a href="/" onClick={(e) => e.preventDefault()}>
+              <a href={info?.grafanaUrl || 'about:blank'} target="_blank" rel="noreferrer">
                 Grafana (configured in cluster)
               </a>
-              <a href="/" onClick={(e) => e.preventDefault()}>
+              <a href={info?.lokiUrl || 'about:blank'} target="_blank" rel="noreferrer">
                 Loki (configured in cluster)
               </a>
             </div>
+
           </div>
         </Card>
       </div>

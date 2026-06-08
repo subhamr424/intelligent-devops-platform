@@ -56,10 +56,21 @@ spec:
                 configMapKeyRef:
                   name: intelligent-platform-config
                   key: BACKEND_MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED
-
+            - name: GRAFANA_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: intelligent-platform-config
+                  key: GRAFANA_URL
+            - name: LOKI_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: intelligent-platform-config
+                  key: LOKI_URL
             - name: SERVER_PORT
               value: "8090"
             - name: APP_SECRET_KEY
+
+
               valueFrom:
                 secretKeyRef:
                   name: intelligent-platform-secret

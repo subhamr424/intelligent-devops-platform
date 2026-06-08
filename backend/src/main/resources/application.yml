@@ -22,7 +22,6 @@ management:
         enabled: true
       show-details: always
 
-
 springdoc:
   api-docs:
     enabled: true
@@ -35,5 +34,16 @@ logging:
     root: INFO
   pattern:
     console: "%m%n"
+
+# Grafana/Loki external URLs (used by /api/info)
+# Helm injects env vars into the running container.
+# Defaults are also provided via @Value in InfoApiController.
+
+grafana:
+  url: ${GRAFANA_URL:http://grafana.intelligent-platform.local}
+
+loki:
+  url: ${LOKI_URL:http://loki.intelligent-platform.local}
+
 
 

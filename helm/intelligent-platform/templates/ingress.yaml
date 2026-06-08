@@ -21,13 +21,33 @@ spec:
                 port:
                   number: {{ .Values.service.backend.port }}
           - path: /actuator
-
             pathType: Prefix
             backend:
               service:
                 name: intelligent-platform-backend
                 port:
                   number: {{ .Values.service.backend.port }}
+          - path: /api/
+            pathType: Prefix
+            backend:
+              service:
+                name: intelligent-platform-backend
+                port:
+                  number: {{ .Values.service.backend.port }}
+          - path: /grafana
+            pathType: Prefix
+            backend:
+              service:
+                name: intelligent-platform-grafana
+                port:
+                  number: 3000
+          - path: /loki
+            pathType: Prefix
+            backend:
+              service:
+                name: intelligent-platform-loki
+                port:
+                  number: 3100
           - path: {{ .Values.ingress.path }}
             pathType: Prefix
             backend:
@@ -35,4 +55,6 @@ spec:
                 name: intelligent-platform-frontend
                 port:
                   number: {{ .Values.service.frontend.port }}
+
+
 
