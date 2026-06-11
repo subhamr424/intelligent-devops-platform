@@ -1,0 +1,117 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: intelligent-platform-grafana-datasources
+  namespace: {{ .Values.global.namespace }}
+data:
+  datasources.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://intelligent-platform-prometheus:9090
+        isDefault: true
+      - name: Loki
+        type: loki
+        access: proxy
+        url: http://intelligent-platform-loki:3100
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: intelligent-platform-grafana-dashboards
+  namespace: {{ .Values.global.namespace }}
+data:
+  dashboards.yaml: |
+    apiVersion: 1
+    providers:
+      - name: 'intelligent-platform'
+        orgId: 1
+        folder: ''
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /etc/grafana/provisioning/dashboards
+  production-pod-logs.json: |
+    {
+      "title": "Kubernetes Pod Logs (Loki)",
+      "uid": "intelligent-platform-pod-logs-all-ns",
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "version": 1,
+      "refresh": "5s",
+      "templating": {
+        "list": [
+          {
+            "type": "query",
+            "name": "namespace",
+            "label": "namespace",
+            "datasource": {
+              "type": "loki",
+              "uid": "loki"
+            },
+            "definition": "label_values({job=\"kubernetes-pods\"}, \"namespace\")",
+            "query": "label_values({job=\"kubernetes-pods\"}, \"namespace\")",
+            "current": {
+              "selected": false,
+              "text": "",
+              "value": ""
+            },
+            "refresh": 1
+          },
+          {
+            "type": "query",
+            "name": "pod",
+            "label": "pod",
+            "datasource": {
+              "type": "loki",
+              "uid": "loki"
+            },
+            "definition": "label_values({job=\"kubernetes-pods\", namespace=\"$namespace\"}, \"pod\")",
+            "query": "label_values({job=\"kubernetes-pods\", namespace=\"$namespace\"}, \"pod\")",
+            "current": {
+              "selected": false,
+              "text": "",
+              "value": ""
+            },
+            "refresh": 1
+          }
+        ]
+      },
+      "panels": [
+        {
+          "type": "logs",
+          "title": "Log stream (all namespaces)",
+          "gridPos": { "h": 12, "w": 24, "x": 0, "y": 0 },
+          "datasource": { "type": "loki", "uid": "loki" },
+          "targets": [
+            {
+              "expr": "{namespace=~\".+\", job=\"kubernetes-pods\", pod=~\".*\"}",
+              "refId": "A"
+            }
+          ],
+          "options": {
+            "showLabels": true,
+            "wrapLogMessage": true
+          }
+        },
+        {
+          "type": "logs",
+          "title": "Log stream (filtered)",
+          "gridPos": { "h": 12, "w": 24, "x": 0, "y": 12 },
+          "datasource": { "type": "loki", "uid": "loki" },
+          "targets": [
+            {
+              "expr": "{job=\"kubernetes-pods\", namespace=~\"$namespace\", pod=~\"$pod\"}",
+              "refId": "B"
+            }
+          ],
+          "options": {
+            "showLabels": true,
+            "wrapLogMessage": true
+          }
+        }
+      ]
+    }

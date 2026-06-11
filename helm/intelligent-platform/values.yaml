@@ -3,7 +3,7 @@ global:
 image:
   backend:
     repository: shubham379/intelligent-devops-platform-backend
-    tag: v5
+    tag: v7
     pullPolicy: IfNotPresent
   frontend:
     repository: shubham379/intelligent-devops-platform-frontend
@@ -49,8 +49,8 @@ backend:
     SPRING_PROFILES_ACTIVE: prod
     MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,metrics,info,prometheus
     MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED: "true"
-    GRAFANA_URL: http://grafana.intelligent-platform.local
-    LOKI_URL: http://loki.intelligent-platform.local
+    GRAFANA_URL: https://intelligent-platform.local/grafana
+    LOKI_URL: https://intelligent-platform.local/loki/ready
     SERVER_PORT: '8090'
 
   liveness:

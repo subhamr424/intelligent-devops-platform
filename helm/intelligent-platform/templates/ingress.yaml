@@ -7,7 +7,7 @@ metadata:
     kubernetes.io/ingress.class: "{{ .Values.ingress.className }}"
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
-    traefik.ingress.kubernetes.io/service.port: "{{ .Values.service.frontend.port }}"
+
 spec:
   rules:
     - host: {{ .Values.ingress.host }}
@@ -34,20 +34,7 @@ spec:
                 name: intelligent-platform-backend
                 port:
                   number: {{ .Values.service.backend.port }}
-          - path: /grafana
-            pathType: Prefix
-            backend:
-              service:
-                name: intelligent-platform-grafana
-                port:
-                  number: 3000
-          - path: /loki
-            pathType: Prefix
-            backend:
-              service:
-                name: intelligent-platform-loki
-                port:
-                  number: 3100
+
           - path: {{ .Values.ingress.path }}
             pathType: Prefix
             backend:
@@ -55,6 +42,35 @@ spec:
                 name: intelligent-platform-frontend
                 port:
                   number: {{ .Values.service.frontend.port }}
+
+          - path: /grafana
+            pathType: Prefix
+            backend:
+              service:
+                name: intelligent-platform-grafana-loki-proxy
+                port:
+                  number: 80
+          - path: /grafana/
+            pathType: Prefix
+            backend:
+              service:
+                name: intelligent-platform-grafana-loki-proxy
+                port:
+                  number: 80
+          - path: /loki
+            pathType: Prefix
+            backend:
+              service:
+                name: intelligent-platform-grafana-loki-proxy
+                port:
+                  number: 80
+          - path: /loki/
+            pathType: Prefix
+            backend:
+              service:
+                name: intelligent-platform-grafana-loki-proxy
+                port:
+                  number: 80
 
 
 

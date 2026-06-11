@@ -1,24 +1,13 @@
-apiVersion: v1
-kind: Service
-metadata:
-  name: intelligent-platform-grafana
-  namespace: {{ .Values.global.namespace }}
-spec:
-  type: ExternalName
-  externalName: ai-healing-platform-grafana.ai-healing-system.svc.cluster.local
-  ports:
-    - name: http
-      port: 3000
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: intelligent-platform-loki
-  namespace: {{ .Values.global.namespace }}
-spec:
-  type: ExternalName
-  externalName: ai-healing-platform-loki.ai-healing-system.svc.cluster.local
-  ports:
-    - name: http
-      port: 3100
+{{/* 
+This chart previously created in-namespace Services pointing at ai-healing-system Grafana/Loki.
+Those selector-based services do not produce endpoints across namespaces, so Traefik cannot route to /grafana and /loki.
+We now expose Grafana/Loki via an in-namespace nginx proxy (see:
+- grafana-loki-proxy-deployment.yaml
+- grafana-loki-proxy-configmap.yaml
+).  
+
+No changes are made to ai-healing-system monitoring components.
+*/}}
+
+{{- /* Intentionally empty (disabled) */ -}}
 
