@@ -2,75 +2,36 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: intelligent-platform
-  namespace: {{ .Values.global.namespace }}
   annotations:
-    kubernetes.io/ingress.class: "{{ .Values.ingress.className }}"
+    kubernetes.io/ingress.class: traefik
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
 
 spec:
   rules:
-    - host: {{ .Values.ingress.host }}
-      http:
-        paths:
-          - path: /api
-            pathType: Prefix
-            backend:
-              service:
-                name: intelligent-platform-backend
-                port:
-                  number: {{ .Values.service.backend.port }}
-          - path: /actuator
-            pathType: Prefix
-            backend:
-              service:
-                name: intelligent-platform-backend
-                port:
-                  number: {{ .Values.service.backend.port }}
-          - path: /api/
-            pathType: Prefix
-            backend:
-              service:
-                name: intelligent-platform-backend
-                port:
-                  number: {{ .Values.service.backend.port }}
+  - host: intelligent-platform.local
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: intelligent-platform-backend
+            port:
+              number: 8090
 
-          - path: {{ .Values.ingress.path }}
-            pathType: Prefix
-            backend:
-              service:
-                name: intelligent-platform-frontend
-                port:
-                  number: {{ .Values.service.frontend.port }}
+      - path: /actuator
+        pathType: Prefix
+        backend:
+          service:
+            name: intelligent-platform-backend
+            port:
+              number: 8090
 
-          - path: /grafana
-            pathType: Prefix
-            backend:
-              service:
-                name: intelligent-platform-grafana-loki-proxy
-                port:
-                  number: 80
-          - path: /grafana/
-            pathType: Prefix
-            backend:
-              service:
-                name: intelligent-platform-grafana-loki-proxy
-                port:
-                  number: 80
-          - path: /loki
-            pathType: Prefix
-            backend:
-              service:
-                name: intelligent-platform-grafana-loki-proxy
-                port:
-                  number: 80
-          - path: /loki/
-            pathType: Prefix
-            backend:
-              service:
-                name: intelligent-platform-grafana-loki-proxy
-                port:
-                  number: 80
-
-
-
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: intelligent-platform-frontend
+            port:
+              number: 80
