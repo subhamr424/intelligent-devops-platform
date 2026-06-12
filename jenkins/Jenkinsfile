@@ -49,7 +49,7 @@ pipeline {
     stage('SonarQube Scan') {
       steps {
         withSonarQubeEnv('sonarqube') {
-          sh "mvn -q -f backend/pom.xml verify sonar:sonar -DskipTests=true -Dsonar.login=\"${SONARQUBE_TOKEN}\""
+          sh "mvn -q -f backend/pom.xml sonar:sonar -DskipTests=true -Dsonar.login=\"${SONARQUBE_TOKEN}\""
         }
       }
       environment {
