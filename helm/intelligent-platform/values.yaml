@@ -50,7 +50,9 @@ backend:
     MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,metrics,info,prometheus
     MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED: "true"
     GRAFANA_URL: https://intelligent-platform.local/grafana
+    # Use a guaranteed-existing Loki endpoint (no UI at /loki).
     LOKI_URL: https://intelligent-platform.local/loki/ready
+
     SERVER_PORT: '8090'
 
   liveness:

@@ -43,7 +43,10 @@ grafana:
   url: ${GRAFANA_URL:http://grafana.intelligent-platform.local}
 
 loki:
-  url: ${LOKI_URL:http://loki.intelligent-platform.local/loki/}
+  # Must match what Loki exposes behind Traefik. Loki has no UI at /loki.
+  # Keep this as a stable operational endpoint.
+  url: ${LOKI_URL:https://intelligent-platform.local/loki/ready}
+
 
 
 
