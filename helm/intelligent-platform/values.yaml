@@ -7,7 +7,7 @@ image:
     pullPolicy: IfNotPresent
   frontend:
     repository: shubham379/intelligent-devops-platform-frontend
-    tag: v5
+    tag: v6
     pullPolicy: IfNotPresent
 replicaCount: 2
 service:

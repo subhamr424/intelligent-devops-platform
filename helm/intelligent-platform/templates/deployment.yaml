@@ -22,6 +22,8 @@ spec:
       labels:
         app.kubernetes.io/name: "intelligent-platform"
         app.kubernetes.io/part-of: "intelligent-platform"
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
     spec:
       serviceAccountName: {{ .Values.serviceAccount.name }}
       securityContext:

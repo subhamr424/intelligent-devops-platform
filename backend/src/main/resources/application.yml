@@ -43,7 +43,8 @@ grafana:
   url: ${GRAFANA_URL:http://grafana.intelligent-platform.local}
 
 loki:
-  url: ${LOKI_URL:http://loki.intelligent-platform.local}
+  url: ${LOKI_URL:http://loki.intelligent-platform.local/loki/}
+
 
 
 
