@@ -13,6 +13,20 @@ data:
   BACKEND_MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED: "{{ .Values.backend.env.MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED }}"
   GRAFANA_URL: "{{ .Values.backend.env.GRAFANA_URL }}"
   LOKI_URL: "{{ .Values.backend.env.LOKI_URL }}"
+  # Build metadata used by /api/build
+  BUILD_VERSION: "{{ .Values.backend.env.BUILD_VERSION | default "unknown" }}"
+  BUILD_COMMIT: "{{ .Values.backend.env.BUILD_COMMIT | default "unknown" }}"
+  BUILD_BRANCH: "{{ .Values.backend.env.BUILD_BRANCH | default "unknown" }}"
+  BUILD_TIMESTAMP: "{{ .Values.backend.env.BUILD_TIMESTAMP | default "unknown" }}"
+
+
+
+
+
+
+
+
+
 
 
 

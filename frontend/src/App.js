@@ -167,13 +167,15 @@ export default function App() {
               <a href={info?.grafanaUrl || 'about:blank'} target="_blank" rel="noreferrer">
                 Grafana (configured in cluster)
               </a>
+
               <a
-                href={info?.lokiUrl ? String(info.lokiUrl).replace(/\/+$/, '') : 'about:blank'}
+                href={'https://intelligent-platform.local/grafana/explore'}
                 target="_blank"
                 rel="noreferrer"
               >
-                Loki (Health)
+                Logs (Grafana)
               </a>
+
 
 
             </div>

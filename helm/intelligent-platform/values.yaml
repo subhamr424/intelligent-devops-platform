@@ -53,7 +53,15 @@ backend:
     # Use a guaranteed-existing Loki endpoint (no UI at /loki).
     LOKI_URL: https://intelligent-platform.local/loki/ready
 
+    # Build metadata injected by Helm values (Jenkins/CI should set these via values.yaml)
+    BUILD_VERSION: v7
+    BUILD_COMMIT: unknown
+    BUILD_BRANCH: main
+    BUILD_TIMESTAMP: unknown
+
+
     SERVER_PORT: '8090'
+
 
   liveness:
     path: /actuator/health/liveness
