@@ -12,8 +12,9 @@ pipeline {
     SLACK_WEBHOOK_CREDENTIALS_ID = 'slack-webhook'
     SONARQUBE_TOKEN_CREDENTIALS_ID = 'sonarqube-token'
 
-    // SonarQube URL (configure)
-    SONAR_HOST_URL = 'http://localhost:9000'
+    // SonarQube URL (Jenkins runs in Docker; SonarQube runs on host)
+    SONAR_HOST_URL = 'http://host.docker.internal:9000'
+
 
     // Jenkins port restrictions: Jenkins is already on 8090; pipeline does not bind ports.
 
@@ -68,6 +69,8 @@ pipeline {
       }
     }
 
+
+
     stage('OWASP Dependency Check') {
       steps {
         sh 'cd backend && mvn -q org.owasp:dependency-check-maven:check -Dformat=HTML -DfailBuildOnCVSS=7'
@@ -76,11 +79,13 @@ pipeline {
 
     stage('Trivy Scan') {
       steps {
-        sh 'trivy --version || true'
+        sh 'if ! command -v trivy >/dev/null 2>&1; then echo "trivy not installed"; exit 1; fi'
+        sh 'trivy --version'
         // Scan dependencies + filesystem (keeps build stable); image scan happens after image build.
         sh 'trivy fs --exit-code 1 --severity HIGH,CRITICAL --ignore-unfixed backend frontend || true'
       }
     }
+
 
     stage('Docker Build Backend') {
       steps {
@@ -136,17 +141,21 @@ pipeline {
 
     stage('Git Push') {
       steps {
-        sh 'git push origin HEAD:${BRANCH_NAME:-main}'
+        sh "git push origin HEAD:${env.BRANCH_NAME ?: 'main'}"
       }
     }
 
+
     stage('Deployment Verification') {
       steps {
-        // ArgoCD will sync; verify rollout.
-        sh 'kubectl rollout status deploy/intelligent-platform -n intelligent-platform --timeout=180s || true'
-        sh 'kubectl get pods -n intelligent-platform -l app.kubernetes.io/name=intelligent-platform -o wide || true'
+        withEnv(['KUBECONFIG=/root/.kube/config']) {
+          // ArgoCD will sync; verify rollout.
+          sh 'kubectl rollout status deploy/intelligent-platform -n intelligent-platform --timeout=180s || true'
+          sh 'kubectl get pods -n intelligent-platform -l app.kubernetes.io/name=intelligent-platform -o wide || true'
+        }
       }
     }
+
 
     stage('Slack Notification') {
       steps {
