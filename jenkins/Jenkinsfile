@@ -25,7 +25,6 @@ pipeline {
   options {
     disableConcurrentBuilds()
     timestamps()
-    ansiColor('xterm')
   }
 
   stages {
@@ -54,7 +53,7 @@ pipeline {
         }
       }
       environment {
-        SONARQUBE_TOKEN = credentials(env.SONARQUBE_TOKEN_CREDENTIALS_ID)
+        SONARQUBE_TOKEN = credentials("sonarqube-token")
       }
     }
 
@@ -65,7 +64,7 @@ pipeline {
         }
       }
       environment {
-        SONARQUBE_TOKEN = credentials(env.SONARQUBE_TOKEN_CREDENTIALS_ID)
+        SONARQUBE_TOKEN = credentials("sonarqube-token")
       }
     }
 
@@ -166,7 +165,7 @@ pipeline {
         }
       }
       environment {
-        SLACK_WEBHOOK = credentials(env.SLACK_WEBHOOK_CREDENTIALS_ID)
+        SLACK_WEBHOOK = credentials("slack-webhook")
       }
     }
   }
