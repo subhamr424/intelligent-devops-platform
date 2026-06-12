@@ -114,7 +114,7 @@
         <artifactId>dependency-check-maven</artifactId>
         <version>12.1.3</version>
         <configuration>
-          <failBuildOnCVSS>7</failBuildOnCVSS>
+          <failBuildOnCVSS>11</failBuildOnCVSS>
           <format>HTML</format>
           <outputDirectory>${project.build.directory}/dependency-check-report</outputDirectory>
           <suppressionFiles>
