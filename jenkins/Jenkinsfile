@@ -162,7 +162,7 @@ pipeline {
         script {
           def status = currentBuild.currentResult
           def msg = "Build #${env.BUILD_NUMBER} ${status}: intelligent-devops-platform"
-          sh "curl -X POST -H 'Content-type: application/json' --data '{\"text\": ${groovy.json.JsonOutput.toJson(msg)} }' $(printenv SLACK_WEBHOOK)"
+          sh "curl -X POST -H 'Content-type: application/json' --data '{\"text\": ${groovy.json.JsonOutput.toJson(msg)} }' ${SLACK_WEBHOOK}"
         }
       }
       environment {
@@ -175,7 +175,7 @@ pipeline {
     failure {
       script {
         def msg = "Build #${env.BUILD_NUMBER} FAILED: intelligent-devops-platform"
-        sh "curl -X POST -H 'Content-type: application/json' --data '{\"text\": ${groovy.json.JsonOutput.toJson(msg)} }' $(printenv SLACK_WEBHOOK) || true"
+        sh "curl -X POST -H 'Content-type: application/json' --data '{\"text\": ${groovy.json.JsonOutput.toJson(msg)} }' ${SLACK_WEBHOOK} || true"
       }
     }
   }
