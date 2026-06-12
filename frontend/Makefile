@@ -1,7 +1,7 @@
 .PHONY: build test
 
 build:
-	npm ci
+	npm install
 	npm run build
 
 test:
