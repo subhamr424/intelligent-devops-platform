@@ -3,11 +3,11 @@ global:
 image:
   backend:
     repository: shubham379/intelligent-devops-platform-backend
-    tag: v7
+    tag: v10
     pullPolicy: IfNotPresent
   frontend:
     repository: shubham379/intelligent-devops-platform-frontend
-    tag: v7
+    tag: v10
     pullPolicy: IfNotPresent
 replicaCount: 2
 service:
@@ -48,21 +48,14 @@ backend:
   env:
     SPRING_PROFILES_ACTIVE: prod
     MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,metrics,info,prometheus
-    MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED: "true"
+    MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED: 'true'
     GRAFANA_URL: https://intelligent-platform.local/grafana
-    # Use a guaranteed-existing Loki endpoint (no UI at /loki).
     LOKI_URL: https://intelligent-platform.local/loki/ready
-
-    # Build metadata injected by Helm values (Jenkins/CI should set these via values.yaml)
-    BUILD_VERSION: v7
+    BUILD_VERSION: v8
     BUILD_COMMIT: unknown
     BUILD_BRANCH: main
     BUILD_TIMESTAMP: unknown
-
-
     SERVER_PORT: '8090'
-
-
   liveness:
     path: /actuator/health/liveness
     port: 8090
