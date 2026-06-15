@@ -13,7 +13,7 @@ pipeline {
     SONARQUBE_TOKEN_CREDENTIALS_ID = 'sonarqube-token'
 
     // SonarQube URL (Jenkins runs in Docker; SonarQube runs on host)
-    SONAR_HOST_URL = 'http://host.docker.internal:9000'
+    SONAR_HOST_URL = 'http://sonarqube:9000'
 
 
     // Jenkins port restrictions: Jenkins is already on 8090; pipeline does not bind ports.
