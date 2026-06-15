@@ -81,7 +81,7 @@ pipeline {
           mkdir -p /tmp/nvd-cache
           mvn -f backend/pom.xml -DskipTests \
           -Ddependency-check.data.directory=/tmp/nvd-cache \
-          -Ddependency-check.nvdApiKey=${NVD_API_KEY} \
+          -Dnvd.api.key=${NVD_API_KEY} \
           dependency-check:check || true
         '''
       }
