@@ -8,7 +8,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 IMAGE_BACKEND="shubham379/intelligent-devops-platform/backend"
 IMAGE_FRONTEND="shubham379/intelligent-devops-platform/frontend"
 
-VERSION_TAG="$(grep -E '^  tag:' "$ROOT_DIR/helm/intelligent-platform/values.yaml" | head -n 1 | awk '{print $2}' | tr -d '"')"
+VERSION_TAG="$(grep -m1 'tag:' "$ROOT_DIR/helm/intelligent-platform/values.yaml" | awk '{print $2}' | tr -d '"')"
 
 # Default: build images with tag from Helm values
 if [[ "$TARGET" == "backend" || "$TARGET" == "all" ]]; then
