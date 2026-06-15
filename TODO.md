@@ -1,20 +1,28 @@
-# TODO - Loki access 404 root cause + fix
+# TODO - Build Fixes (DevSecOps)
 
-## Completed
-- Identify cause of `/loki` 404: Loki has no UI/landing at `/loki`, only operational endpoints like `/loki/ready`.
-- Confirm routing: Traefik ingress correctly routes `/loki*` to Loki service.
-- Update backend config to publish a stable Loki destination used by the frontend.
-- Update frontend Loki card to open a stable endpoint and avoid trailing-slash 404.
+## Step 1: Root cause analysis (done)
+- Validate suppression XML schema incompatibility with dependency-check 12.1.3.
+- Identify OSS Index 401 likely due to missing auth token.
+- Identify Jenkins secret interpolation warning in Slack notification.
 
-## Remaining
-- Ensure ArgoCD picks up changes and reconciles.
-- Build/push updated frontend/backend images.
-- ArgoCD sync + rollout validation.
-- Validate end-to-end from UI:
-  - Click Grafana card → opens `/grafana/`
-  - Click Loki card → opens `/loki/ready` (HTTP 200), never `/loki`.
+## Step 2: Implement code fixes (in progress)
+1. ✅ Update `backend/src/main/resources/dependency-check-suppressions.xml` to a schema-valid OWASP Dependency Check suppressions format.
+2. Update `backend/pom.xml`:
+   - Set Java 21 compatibility.
+   - Configure dependency-check 12.1.3 properly for OSS Index auth.
+   - Ensure suppression file is referenced correctly.
+3. Update `jenkins/Jenkinsfile`:
+   - Fix insecure secret interpolation for Slack webhook.
+   - Keep SonarQube enabled.
 
-## Validation commands
-- `curl -sk -o /dev/null -w '%{http_code}\n' https://intelligent-platform.local/grafana/`
-- `curl -sk -o /dev/null -w '%{http_code}\n' https://intelligent-platform.local/loki/ready`
+
+
+## Step 3: Verification
+- Run: `mvn -f backend/pom.xml clean verify`
+- Run: `mvn -f backend/pom.xml verify sonar:sonar`
+
+## Step 4: Security impact assessment
+- Confirm scans remain enabled.
+- Confirm OSS Index auth uses secure credentials.
+- Confirm Jenkins no longer interpolates secrets into shell commands.
 
