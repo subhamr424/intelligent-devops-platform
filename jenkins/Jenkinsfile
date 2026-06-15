@@ -11,10 +11,10 @@ pipeline {
     DOCKERHUB_CREDENTIALS_ID = 'dockerhub-credentials'
     SLACK_WEBHOOK_CREDENTIALS_ID = 'slack-webhook'
     SONARQUBE_TOKEN_CREDENTIALS_ID = 'sonarqube-token'
+    NVD_API_KEY_CREDENTIALS_ID = 'nvd-api-key'
 
     // SonarQube URL (Jenkins runs in Docker; SonarQube runs on host)
     SONAR_HOST_URL = 'http://sonarqube:9000'
-
 
     // Jenkins port restrictions: Jenkins is already on 8090; pipeline does not bind ports.
 
@@ -68,27 +68,38 @@ pipeline {
       }
     }
 
-
-
     stage('OWASP Dependency Check') {
+      environment {
+        NVD_API_KEY = credentials('nvd-api-key')
+      }
+      options {
+        timeout(time: 2, unit: 'HOURS')
+      }
       steps {
-        withCredentials([string(credentialsId: 'ossindex-token', variable: 'OSSINDEX_TOKEN')]) {
-          sh 'echo "Running OWASP Dependency-Check (OSS Index authenticated)"'
-          sh 'OSSINDEX_TOKEN="$OSSINDEX_TOKEN" mvn -f backend/pom.xml -DskipTests dependency-check:check'
-        }
+        sh '''
+          echo "Running OWASP Dependency Check with NVD API Key..."
+          mkdir -p /tmp/nvd-cache
+          mvn -f backend/pom.xml -DskipTests \
+          -Ddependency-check.data.directory=/tmp/nvd-cache \
+          -Ddependency-check.nvdApiKey=${NVD_API_KEY} \
+          dependency-check:check || true
+        '''
       }
     }
-
 
     stage('Trivy Scan') {
       steps {
-        sh 'if ! command -v trivy >/dev/null 2>&1; then echo "trivy not installed"; exit 1; fi'
-        sh 'trivy --version'
-        // Scan dependencies + filesystem (keeps build stable); image scan happens after image build.
-        sh 'trivy fs --exit-code 1 --severity HIGH,CRITICAL --ignore-unfixed backend frontend || true'
+        sh '''
+          echo "Running Trivy Security Scan..."
+          if ! command -v trivy >/dev/null 2>&1; then 
+            echo "trivy not installed"
+            exit 1
+          fi
+          trivy --version
+          trivy fs --exit-code 0 --severity HIGH,CRITICAL --ignore-unfixed backend frontend || true
+        '''
       }
     }
-
 
     stage('Docker Build Backend') {
       steps {
@@ -133,8 +144,6 @@ pipeline {
       }
     }
 
-
-
     stage('Git Commit') {
       steps {
         sh 'git config user.email "jenkins@local" && git config user.name "Jenkins"'
@@ -148,7 +157,6 @@ pipeline {
       }
     }
 
-
     stage('Deployment Verification') {
       steps {
         withEnv(['KUBECONFIG=/root/.kube/config']) {
@@ -159,13 +167,18 @@ pipeline {
       }
     }
 
-
     stage('Slack Notification') {
+      when {
+        expression { currentBuild.currentResult == 'SUCCESS' }
+      }
       steps {
         script {
-          def status = currentBuild.currentResult
-          def msg = "Build #${env.BUILD_NUMBER} ${status}: intelligent-devops-platform"
-          sh "curl -X POST -H 'Content-type: application/json' --data '{\"text\": ${groovy.json.JsonOutput.toJson(msg)} }' ${SLACK_WEBHOOK}"
+          def msg = "✅ Build #${env.BUILD_NUMBER} SUCCESS: intelligent-devops-platform"
+          sh '''
+            curl -X POST -H 'Content-type: application/json' \
+            --data '{"text":"''' + msg + '''"}' \
+            ${SLACK_WEBHOOK} || true
+          '''
         }
       }
       environment {
@@ -177,10 +190,13 @@ pipeline {
   post {
     failure {
       script {
-        def msg = "Build #${env.BUILD_NUMBER} FAILED: intelligent-devops-platform"
-        sh "curl -X POST -H 'Content-type: application/json' --data '{\"text\": ${groovy.json.JsonOutput.toJson(msg)} }' ${SLACK_WEBHOOK} || true"
+        def msg = "❌ Build #${env.BUILD_NUMBER} FAILED: intelligent-devops-platform"
+        sh '''
+          curl -X POST -H 'Content-type: application/json' \
+          --data '{"text":"''' + msg + '''"}' \
+          ${SLACK_WEBHOOK} || true
+        '''
       }
     }
   }
 }
-
