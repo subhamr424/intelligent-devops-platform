@@ -4,8 +4,8 @@ pipeline {
   environment {
     // Adjust Jenkins global tools/credentials as needed
     REGISTRY = 'docker.io'
-    IMAGE_BACKEND = 'intelligent-devops-platform/backend'
-    IMAGE_FRONTEND = 'intelligent-devops-platform/frontend'
+    IMAGE_BACKEND = 'intelligent-devops-platform-backend'
+    IMAGE_FRONTEND = 'intelligent-devops-platform-frontend'
 
     // Jenkins credentials IDs (configure in Jenkins UI)
     DOCKERHUB_CREDENTIALS_ID = 'dockerhub-credentials'
