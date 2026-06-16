@@ -3,11 +3,11 @@ global:
 image:
   backend:
     repository: shubham379/intelligent-devops-platform-backend
-    tag: v8
+    tag: v9
     pullPolicy: IfNotPresent
   frontend:
     repository: shubham379/intelligent-devops-platform-frontend
-    tag: v8
+    tag: v9
     pullPolicy: IfNotPresent
 replicaCount: 2
 service:
