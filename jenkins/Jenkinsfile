@@ -44,6 +44,17 @@ pipeline {
     '''
   }
 }
+        stage('Automatic Version Increment') {
+      steps {
+        sh '''
+          echo "====== 📝 Version Increment ======"
+          ./scripts/update-image-tag.sh
+          echo "✅ Version updated successfully"
+          echo ""
+        '''
+      }
+    }
+
 
     stage('Build Backend') {
       steps {
@@ -193,17 +204,7 @@ pipeline {
       }
     }
 
-    stage('Automatic Version Increment') {
-      steps {
-        sh '''
-          echo "====== 📝 Version Increment ======"
-          ./scripts/update-image-tag.sh
-          echo "✅ Version updated successfully"
-          echo ""
-        '''
-      }
-    }
-
+    
     stage('Update Helm values.yaml') {
       steps {
         sh '''
