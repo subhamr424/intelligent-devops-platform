@@ -23,23 +23,27 @@ pipeline {
   stages {
 
     stage('Checkout') {
-      steps {
-        checkout(
-          [
-            $class: 'GitSCM',
-            branches: [[name: 'main']],
-            userRemoteConfigs: [[url: 'https://github.com/subham601/intelligent-devops-platform.git']]
-          ]
-        )
-        sh '''
-          echo "====== 📦 Checkout Stage ======"
-          echo "✅ Repository checked out successfully"
-          echo "Current branch: $(git rev-parse --abbrev-ref HEAD)"
-          echo "Latest commit: $(git log -1 --oneline)"
-          echo ""
-        '''
-      }
-    }
+  steps {
+    checkout([
+      $class: 'GitSCM',
+      branches: [[name: '*/main']],
+      userRemoteConfigs: [[
+        url: 'https://github.com/subham601/intelligent-devops-platform.git',
+        credentialsId: 'github-token'
+      ]]
+    ])
+
+    sh '''
+      git checkout -B main origin/main
+
+      echo "====== 📦 Checkout Stage ======"
+      echo "✅ Repository checked out successfully"
+      echo "Current branch: $(git rev-parse --abbrev-ref HEAD)"
+      echo "Latest commit: $(git log -1 --oneline)"
+      echo ""
+    '''
+  }
+}
 
     stage('Build Backend') {
       steps {
@@ -227,71 +231,57 @@ pipeline {
     }
 
     stage('Git Push') {
-      steps {
-        withCredentials([usernamePassword(
-          credentialsId: env.GITHUB_CREDENTIALS_ID,
-          usernameVariable: 'GIT_USER',
-          passwordVariable: 'GIT_TOKEN'
-        )]) {
-          sh '''
-            #!/bin/bash
-            set -e
-            
-            echo "====== 🚀 Git Push Stage ======"
-            echo ""
-            echo "Configuring git user..."
-            git config user.email "jenkins@local"
-            git config user.name "Jenkins"
-            
-            echo "Current git status:"
-            git status
-            
-            echo ""
-            echo "Current branch: $(git rev-parse --abbrev-ref HEAD)"
-            
-            echo ""
-            echo "Recent commits:"
-            git log --oneline -3
-            
-            echo ""
-            echo "Configuring git credentials..."
-            git config --global credential.helper 'cache --timeout=3600'
-            
-            echo "Setting up remote URL with credentials..."
-            git remote set-url origin https://${GIT_USER}:${GIT_TOKEN}@github.com/subham601/intelligent-devops-platform.git
-            
-            echo ""
-            echo "Verifying remote configuration..."
-            git remote -v
-            
-            echo ""
-            echo "Attempting to push to main branch..."
-            
-            if git push origin main; then
-              echo ""
-              echo "✅ Successfully pushed to main branch"
-              echo ""
-              echo "====== 🎉 Git Push Completed Successfully ======"
-            else
-              echo ""
-              echo "⚠️  Push to main failed, attempting master..."
-              
-              if git push origin master; then
-                echo ""
-                echo "✅ Successfully pushed to master branch"
-                echo ""
-                echo "====== 🎉 Git Push Completed Successfully ======"
-              else
-                echo ""
-                echo "❌ Failed to push to both main and master branches!"
-                echo "====== ❌ Git Push Failed ======"
-                exit 1
-              fi
-            fi
-          '''
-        }
-      }
+  steps {
+    withCredentials([usernamePassword(
+      credentialsId: 'github-token',
+      usernameVariable: 'GIT_USER',
+      passwordVariable: 'GIT_TOKEN'
+    )]) {
+
+      sh '''
+        #!/bin/bash
+        set -e
+
+        echo "====== 🚀 Git Push Stage ======"
+
+        git config user.email "jenkins@local"
+        git config user.name "Jenkins"
+
+        git checkout -B main
+
+        echo "Current branch:"
+        git branch
+
+        if [ -z "$GIT_USER" ]; then
+          echo "❌ GIT_USER missing"
+          exit 1
+        fi
+
+        if [ -z "$GIT_TOKEN" ]; then
+          echo "❌ GIT_TOKEN missing"
+          exit 1
+        fi
+
+        echo "✅ GitHub credentials loaded"
+
+        git remote set-url origin \
+        https://${GIT_USER}:${GIT_TOKEN}@github.com/subham601/intelligent-devops-platform.git
+
+        git fetch origin
+
+        git pull --rebase origin main || true
+
+        echo "Recent commits:"
+        git log --oneline -5
+
+        echo "Pushing commit..."
+        git push origin HEAD:main
+
+        echo "✅ Git Push Successful"
+      '''
     }
+  }
+}
 
     stage('Deployment Verification') {
       steps {
