@@ -341,17 +341,17 @@ pipeline {
       }
     }
     always {
-      sh '''
-        echo ""
-        echo "╔════════════════════════════════════════╗"
-        echo "║   📊 BUILD SUMMARY                     ║"
-        echo "╚════════════════════════════════════════╝"
-        echo "Build Status: ${currentBuild.currentResult}"
-        echo "Build Number: #${BUILD_NUMBER}"
-        echo "Build Duration: ${currentBuild.durationString}"
-        echo "Timestamp: $(date)"
-        echo ""
-      '''
-    }
+  script {
+    sh """
+      echo ""
+      echo "╔════════════════════════════════════════╗"
+      echo "║   📊 BUILD SUMMARY                     ║"
+      echo "╚════════════════════════════════════════╝"
+      echo "Build Status: ${currentBuild.currentResult}"
+      echo "Build Number: #${BUILD_NUMBER}"
+      echo "Build Duration: ${currentBuild.durationString}"
+      echo "Timestamp: \$(date)"
+      echo ""
+    """
   }
 }
