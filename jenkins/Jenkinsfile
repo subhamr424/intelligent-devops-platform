@@ -7,6 +7,7 @@ pipeline {
     IMAGE_FRONTEND = 'intelligent-devops-platform-frontend'
 
     DOCKERHUB_CREDENTIALS_ID = 'dockerhub-credentials'
+    GITHUB_CREDENTIALS_ID = 'github-token'
     SLACK_WEBHOOK_CREDENTIALS_ID = 'slack-webhook'
     SONARQUBE_TOKEN_CREDENTIALS_ID = 'sonarqube-token'
     NVD_API_KEY_CREDENTIALS_ID = 'nvd-api-key'
@@ -156,14 +157,16 @@ pipeline {
     stage('Git Push') {
       steps {
         withCredentials([usernamePassword(
-          credentialsId: 'github-token',
+          credentialsId: env.GITHUB_CREDENTIALS_ID,
           usernameVariable: 'GITHUB_USER',
           passwordVariable: 'GITHUB_TOKEN'
         )]) {
-          sh '''
+          sh """
+            git config user.email "jenkins@local"
+            git config user.name "Jenkins"
             git remote set-url origin https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/subham601/intelligent-devops-platform.git
             git push origin HEAD:main
-          '''
+          """
         }
       }
     }
