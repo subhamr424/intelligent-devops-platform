@@ -24,19 +24,42 @@ pipeline {
 
     stage('Checkout') {
       steps {
-        checkout scm
+        checkout(
+          [
+            $class: 'GitSCM',
+            branches: [[name: 'main']],
+            userRemoteConfigs: [[url: 'https://github.com/subham601/intelligent-devops-platform.git']]
+          ]
+        )
+        sh '''
+          echo "====== 📦 Checkout Stage ======"
+          echo "✅ Repository checked out successfully"
+          echo "Current branch: $(git rev-parse --abbrev-ref HEAD)"
+          echo "Latest commit: $(git log -1 --oneline)"
+          echo ""
+        '''
       }
     }
 
     stage('Build Backend') {
       steps {
-        sh 'make build'
+        sh '''
+          echo "====== 🔨 Build Backend Stage ======"
+          make build
+          echo "✅ Backend build completed"
+          echo ""
+        '''
       }
     }
 
     stage('Run Tests') {
       steps {
-        sh 'make test'
+        sh '''
+          echo "====== ✔️  Test Stage ======"
+          make test
+          echo "✅ Tests completed"
+          echo ""
+        '''
       }
     }
 
@@ -45,9 +68,16 @@ pipeline {
         SONARQUBE_TOKEN = credentials("sonarqube-token")
       }
       steps {
+        sh '''
+          echo "====== 🔍 SonarQube Scan Stage ======"
+        '''
         withSonarQubeEnv('sonarqube') {
           sh 'mvn -q -f backend/pom.xml sonar:sonar -DskipTests=true -Dsonar.login="$SONARQUBE_TOKEN"'
         }
+        sh '''
+          echo "✅ SonarQube scan completed"
+          echo ""
+        '''
       }
     }
 
@@ -56,9 +86,16 @@ pipeline {
         SONARQUBE_TOKEN = credentials("sonarqube-token")
       }
       steps {
+        sh '''
+          echo "====== 🎯 Sonar Quality Gate Stage ======"
+        '''
         withSonarQubeEnv('sonarqube') {
           sh 'mvn -q -f backend/pom.xml sonar:sonar -DskipTests=true -Dsonar.login="$SONARQUBE_TOKEN" -Dsonar.qualitygate.wait=true'
         }
+        sh '''
+          echo "✅ Quality gate passed"
+          echo ""
+        '''
       }
     }
 
@@ -68,12 +105,15 @@ pipeline {
       }
       steps {
         sh '''
+          echo "====== 🛡️  OWASP Dependency Check ======"
           echo "Running OWASP Dependency Check..."
           mkdir -p /tmp/nvd-cache
           mvn -f backend/pom.xml -DskipTests \
           -Ddependency-check.data.directory=/tmp/nvd-cache \
           -Dnvd.api.key=${NVD_API_KEY} \
           dependency-check:check || true
+          echo "✅ OWASP check completed"
+          echo ""
         '''
       }
     }
@@ -81,22 +121,35 @@ pipeline {
     stage('Trivy Scan') {
       steps {
         sh '''
+          echo "====== 🔐 Trivy Security Scan ======"
           echo "Running Trivy Scan..."
-          trivy --version || echo "Trivy not installed"
+          trivy --version || echo "⚠️  Trivy not installed"
           trivy fs --exit-code 0 --severity HIGH,CRITICAL --ignore-unfixed backend frontend || true
+          echo "✅ Trivy scan completed"
+          echo ""
         '''
       }
     }
 
     stage('Docker Build Backend') {
       steps {
-        sh './scripts/build.sh backend'
+        sh '''
+          echo "====== 🐳 Docker Build Backend ======"
+          ./scripts/build.sh backend
+          echo "✅ Docker image built successfully"
+          echo ""
+        '''
       }
     }
 
     stage('Docker Build Frontend') {
       steps {
-        sh './scripts/build.sh frontend'
+        sh '''
+          echo "====== 🐳 Docker Build Frontend ======"
+          ./scripts/build.sh frontend
+          echo "✅ Docker image built successfully"
+          echo ""
+        '''
       }
     }
 
@@ -108,8 +161,11 @@ pipeline {
           passwordVariable: 'DOCKERHUB_PASS'
         )]) {
           sh '''
+            echo "====== 📤 Docker Push Backend ======"
             echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin docker.io
             ./scripts/deploy.sh push-backend
+            echo "✅ Backend image pushed to Docker Hub"
+            echo ""
           '''
         }
       }
@@ -123,8 +179,11 @@ pipeline {
           passwordVariable: 'DOCKERHUB_PASS'
         )]) {
           sh '''
+            echo "====== 📤 Docker Push Frontend ======"
             echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin docker.io
             ./scripts/deploy.sh push-frontend
+            echo "✅ Frontend image pushed to Docker Hub"
+            echo ""
           '''
         }
       }
@@ -132,24 +191,37 @@ pipeline {
 
     stage('Automatic Version Increment') {
       steps {
-        sh './scripts/update-image-tag.sh'
+        sh '''
+          echo "====== 📝 Version Increment ======"
+          ./scripts/update-image-tag.sh
+          echo "✅ Version updated successfully"
+          echo ""
+        '''
       }
     }
 
     stage('Update Helm values.yaml') {
       steps {
-        sh 'git diff --exit-code -- helm/intelligent-platform/values.yaml || true'
+        sh '''
+          echo "====== 📋 Helm Values Check ======"
+          git diff --exit-code -- helm/intelligent-platform/values.yaml || true
+          echo "✅ Helm values checked"
+          echo ""
+        '''
       }
     }
 
     stage('Git Commit') {
       steps {
         sh '''
+          echo "====== 💾 Git Commit ======"
           git config user.email "jenkins@local"
           git config user.name "Jenkins"
 
           git add helm/intelligent-platform/values.yaml
-          git commit -m "chore(ci): bump image tags" || echo "No changes to commit"
+          git commit -m "chore(ci): bump image tags" || echo "ℹ️  No changes to commit"
+          echo "✅ Git commit completed"
+          echo ""
         '''
       }
     }
@@ -158,24 +230,85 @@ pipeline {
       steps {
         withCredentials([usernamePassword(
           credentialsId: env.GITHUB_CREDENTIALS_ID,
-          usernameVariable: 'GITHUB_USER',
-          passwordVariable: 'GITHUB_TOKEN'
+          usernameVariable: 'GIT_USER',
+          passwordVariable: 'GIT_TOKEN'
         )]) {
-          sh """
+          sh '''
+            #!/bin/bash
+            set -e
+            
+            echo "====== 🚀 Git Push Stage ======"
+            echo ""
+            echo "Configuring git user..."
             git config user.email "jenkins@local"
             git config user.name "Jenkins"
-            git remote set-url origin https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/subham601/intelligent-devops-platform.git
-            git push origin HEAD:main
-          """
+            
+            echo "Current git status:"
+            git status
+            
+            echo ""
+            echo "Current branch: $(git rev-parse --abbrev-ref HEAD)"
+            
+            echo ""
+            echo "Recent commits:"
+            git log --oneline -3
+            
+            echo ""
+            echo "Configuring git credentials..."
+            git config --global credential.helper 'cache --timeout=3600'
+            
+            echo "Setting up remote URL with credentials..."
+            git remote set-url origin https://${GIT_USER}:${GIT_TOKEN}@github.com/subham601/intelligent-devops-platform.git
+            
+            echo ""
+            echo "Verifying remote configuration..."
+            git remote -v
+            
+            echo ""
+            echo "Attempting to push to main branch..."
+            
+            if git push origin main; then
+              echo ""
+              echo "✅ Successfully pushed to main branch"
+              echo ""
+              echo "====== 🎉 Git Push Completed Successfully ======"
+            else
+              echo ""
+              echo "⚠️  Push to main failed, attempting master..."
+              
+              if git push origin master; then
+                echo ""
+                echo "✅ Successfully pushed to master branch"
+                echo ""
+                echo "====== 🎉 Git Push Completed Successfully ======"
+              else
+                echo ""
+                echo "❌ Failed to push to both main and master branches!"
+                echo "====== ❌ Git Push Failed ======"
+                exit 1
+              fi
+            fi
+          '''
         }
       }
     }
 
     stage('Deployment Verification') {
       steps {
+        sh '''
+          echo "====== 🔍 Deployment Verification ======"
+        '''
         withEnv(['KUBECONFIG=/root/.kube/config']) {
-          sh 'kubectl rollout status deploy/intelligent-platform -n intelligent-platform --timeout=180s || true'
-          sh 'kubectl get pods -n intelligent-platform -l app.kubernetes.io/name=intelligent-platform -o wide || true'
+          sh '''
+            echo "Checking rollout status..."
+            kubectl rollout status deploy/intelligent-platform -n intelligent-platform --timeout=180s || true
+            
+            echo ""
+            echo "Pod details:"
+            kubectl get pods -n intelligent-platform -l app.kubernetes.io/name=intelligent-platform -o wide || true
+            echo "✅ Deployment verification completed"
+            echo ""
+          '''
         }
       }
     }
@@ -188,9 +321,12 @@ pipeline {
         script {
           def msg = "✅ Build #${env.BUILD_NUMBER} SUCCESS: intelligent-devops-platform"
           sh '''
+            echo "====== 📢 Slack Notification ======"
             curl -X POST -H 'Content-type: application/json' \
             --data '{"text":"''' + msg + '''"}' \
             ${SLACK_WEBHOOK} || true
+            echo "✅ Notification sent"
+            echo ""
           '''
         }
       }
@@ -205,11 +341,26 @@ pipeline {
       script {
         def msg = "❌ Build #${env.BUILD_NUMBER} FAILED: intelligent-devops-platform"
         sh '''
+          echo "====== 📢 Slack Failure Notification ======"
           curl -X POST -H 'Content-type: application/json' \
           --data '{"text":"''' + msg + '''"}' \
           ${SLACK_WEBHOOK} || true
+          echo "❌ Failure notification sent"
         '''
       }
+    }
+    always {
+      sh '''
+        echo ""
+        echo "╔════════════════════════════════════════╗"
+        echo "║   📊 BUILD SUMMARY                     ║"
+        echo "╚════════════════════════════════════════╝"
+        echo "Build Status: ${currentBuild.currentResult}"
+        echo "Build Number: #${BUILD_NUMBER}"
+        echo "Build Duration: ${currentBuild.durationString}"
+        echo "Timestamp: $(date)"
+        echo ""
+      '''
     }
   }
 }
