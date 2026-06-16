@@ -95,10 +95,20 @@
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
+        <version>${spring.boot.version}</version>
+
         <configuration>
-          <mainClass>intelligent.devops.backend.BackendApplication</mainClass>
+           <mainClass>intelligent.devops.backend.BackendApplication</mainClass>
         </configuration>
-      </plugin>
+
+        <executions>
+         <execution>
+          <goals>
+           <goal>repackage</goal>
+          </goals>
+        </execution>
+      </executions>
+    </plugin>
 
 
       <plugin>
