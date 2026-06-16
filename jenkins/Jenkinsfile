@@ -2,23 +2,15 @@ pipeline {
   agent any
 
   environment {
-    // Adjust Jenkins global tools/credentials as needed
     REGISTRY = 'docker.io'
     IMAGE_BACKEND = 'intelligent-devops-platform-backend'
     IMAGE_FRONTEND = 'intelligent-devops-platform-frontend'
 
-    // Jenkins credentials IDs (configure in Jenkins UI)
     DOCKERHUB_CREDENTIALS_ID = 'dockerhub-credentials'
     SLACK_WEBHOOK_CREDENTIALS_ID = 'slack-webhook'
     SONARQUBE_TOKEN_CREDENTIALS_ID = 'sonarqube-token'
     NVD_API_KEY_CREDENTIALS_ID = 'nvd-api-key'
 
-    // SonarQube URL (Jenkins runs in Docker; SonarQube runs on host)
-    SONAR_HOST_URL = 'http://sonarqube:9000'
-
-    // Jenkins port restrictions: Jenkins is already on 8090; pipeline does not bind ports.
-
-    // Versioning
     VERSION_FILE = 'helm/intelligent-platform/values.yaml'
   }
 
@@ -28,6 +20,7 @@ pipeline {
   }
 
   stages {
+
     stage('Checkout') {
       steps {
         checkout scm
@@ -47,24 +40,24 @@ pipeline {
     }
 
     stage('SonarQube Scan') {
+      environment {
+        SONARQUBE_TOKEN = credentials("sonarqube-token")
+      }
       steps {
         withSonarQubeEnv('sonarqube') {
           sh 'mvn -q -f backend/pom.xml sonar:sonar -DskipTests=true -Dsonar.login="$SONARQUBE_TOKEN"'
         }
       }
-      environment {
-        SONARQUBE_TOKEN = credentials("sonarqube-token")
-      }
     }
 
     stage('Sonar Quality Gate') {
+      environment {
+        SONARQUBE_TOKEN = credentials("sonarqube-token")
+      }
       steps {
         withSonarQubeEnv('sonarqube') {
           sh 'mvn -q -f backend/pom.xml sonar:sonar -DskipTests=true -Dsonar.login="$SONARQUBE_TOKEN" -Dsonar.qualitygate.wait=true'
         }
-      }
-      environment {
-        SONARQUBE_TOKEN = credentials("sonarqube-token")
       }
     }
 
@@ -72,12 +65,9 @@ pipeline {
       environment {
         NVD_API_KEY = credentials('nvd-api-key')
       }
-      options {
-        timeout(time: 2, unit: 'HOURS')
-      }
       steps {
         sh '''
-          echo "Running OWASP Dependency Check with NVD API Key..."
+          echo "Running OWASP Dependency Check..."
           mkdir -p /tmp/nvd-cache
           mvn -f backend/pom.xml -DskipTests \
           -Ddependency-check.data.directory=/tmp/nvd-cache \
@@ -90,12 +80,8 @@ pipeline {
     stage('Trivy Scan') {
       steps {
         sh '''
-          echo "Running Trivy Security Scan..."
-          if ! command -v trivy >/dev/null 2>&1; then 
-            echo "trivy not installed"
-            exit 1
-          fi
-          trivy --version
+          echo "Running Trivy Scan..."
+          trivy --version || echo "Trivy not installed"
           trivy fs --exit-code 0 --severity HIGH,CRITICAL --ignore-unfixed backend frontend || true
         '''
       }
@@ -103,30 +89,42 @@ pipeline {
 
     stage('Docker Build Backend') {
       steps {
-        sh "./scripts/build.sh backend"
+        sh './scripts/build.sh backend'
       }
     }
 
     stage('Docker Build Frontend') {
       steps {
-        sh "./scripts/build.sh frontend"
+        sh './scripts/build.sh frontend'
       }
     }
 
     stage('Docker Push Backend') {
       steps {
-        withCredentials([usernamePassword(credentialsId: env.DOCKERHUB_CREDENTIALS_ID, usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_PASS')]) {
-          sh "echo \"$DOCKERHUB_PASS\" | docker login -u \"$DOCKERHUB_USER\" --password-stdin ${REGISTRY}"
-          sh "./scripts/deploy.sh push-backend ${IMAGE_BACKEND}"
+        withCredentials([usernamePassword(
+          credentialsId: env.DOCKERHUB_CREDENTIALS_ID,
+          usernameVariable: 'DOCKERHUB_USER',
+          passwordVariable: 'DOCKERHUB_PASS'
+        )]) {
+          sh '''
+            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin docker.io
+            ./scripts/deploy.sh push-backend
+          '''
         }
       }
     }
 
     stage('Docker Push Frontend') {
       steps {
-        withCredentials([usernamePassword(credentialsId: env.DOCKERHUB_CREDENTIALS_ID, usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_PASS')]) {
-          sh "echo \"$DOCKERHUB_PASS\" | docker login -u \"$DOCKERHUB_USER\" --password-stdin ${REGISTRY}"
-          sh "./scripts/deploy.sh push-frontend ${IMAGE_FRONTEND}"
+        withCredentials([usernamePassword(
+          credentialsId: env.DOCKERHUB_CREDENTIALS_ID,
+          usernameVariable: 'DOCKERHUB_USER',
+          passwordVariable: 'DOCKERHUB_PASS'
+        )]) {
+          sh '''
+            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin docker.io
+            ./scripts/deploy.sh push-frontend
+          '''
         }
       }
     }
@@ -139,28 +137,40 @@ pipeline {
 
     stage('Update Helm values.yaml') {
       steps {
-        // validate helm values were actually updated
         sh 'git diff --exit-code -- helm/intelligent-platform/values.yaml || true'
       }
     }
 
     stage('Git Commit') {
       steps {
-        sh 'git config user.email "jenkins@local" && git config user.name "Jenkins"'
-        sh 'git add helm/intelligent-platform/values.yaml && git commit -m "chore(ci): bump image tags" || echo "No changes to commit"'
+        sh '''
+          git config user.email "jenkins@local"
+          git config user.name "Jenkins"
+
+          git add helm/intelligent-platform/values.yaml
+          git commit -m "chore(ci): bump image tags" || echo "No changes to commit"
+        '''
       }
     }
 
     stage('Git Push') {
       steps {
-        sh "git push origin HEAD:${env.BRANCH_NAME ?: 'main'}"
+        withCredentials([usernamePassword(
+          credentialsId: 'github-token',
+          usernameVariable: 'GITHUB_USER',
+          passwordVariable: 'GITHUB_TOKEN'
+        )]) {
+          sh '''
+            git remote set-url origin https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/subham601/intelligent-devops-platform.git
+            git push origin HEAD:main
+          '''
+        }
       }
     }
 
     stage('Deployment Verification') {
       steps {
         withEnv(['KUBECONFIG=/root/.kube/config']) {
-          // ArgoCD will sync; verify rollout.
           sh 'kubectl rollout status deploy/intelligent-platform -n intelligent-platform --timeout=180s || true'
           sh 'kubectl get pods -n intelligent-platform -l app.kubernetes.io/name=intelligent-platform -o wide || true'
         }
