@@ -23,28 +23,29 @@ pipeline {
   stages {
 
     stage('Checkout') {
-  steps {
-    checkout([
-      $class: 'GitSCM',
-      branches: [[name: '*/main']],
-      userRemoteConfigs: [[
-        url: 'https://github.com/subham601/intelligent-devops-platform.git',
-        credentialsId: 'github-token'
-      ]]
-    ])
+      steps {
+        checkout([
+          $class: 'GitSCM',
+          branches: [[name: '*/main']],
+          userRemoteConfigs: [[
+            url: 'https://github.com/subham601/intelligent-devops-platform.git',
+            credentialsId: 'github-token'
+          ]]
+        ])
 
-    sh '''
-      git checkout -B main origin/main
+        sh '''
+          git checkout -B main origin/main
 
-      echo "====== 📦 Checkout Stage ======"
-      echo "✅ Repository checked out successfully"
-      echo "Current branch: $(git rev-parse --abbrev-ref HEAD)"
-      echo "Latest commit: $(git log -1 --oneline)"
-      echo ""
-    '''
-  }
-}
-        stage('Automatic Version Increment') {
+          echo "====== 📦 Checkout Stage ======"
+          echo "✅ Repository checked out successfully"
+          echo "Current branch: $(git rev-parse --abbrev-ref HEAD)"
+          echo "Latest commit: $(git log -1 --oneline)"
+          echo ""
+        '''
+      }
+    }
+
+    stage('Automatic Version Increment') {
       steps {
         sh '''
           echo "====== 📝 Version Increment ======"
@@ -54,7 +55,6 @@ pipeline {
         '''
       }
     }
-
 
     stage('Build Backend') {
       steps {
@@ -204,7 +204,6 @@ pipeline {
       }
     }
 
-    
     stage('Update Helm values.yaml') {
       steps {
         sh '''
@@ -232,57 +231,56 @@ pipeline {
     }
 
     stage('Git Push') {
-  steps {
-    withCredentials([usernamePassword(
-      credentialsId: 'github-token',
-      usernameVariable: 'GIT_USER',
-      passwordVariable: 'GIT_TOKEN'
-    )]) {
+      steps {
+        withCredentials([usernamePassword(
+          credentialsId: 'github-token',
+          usernameVariable: 'GIT_USER',
+          passwordVariable: 'GIT_TOKEN'
+        )]) {
+          sh '''
+            #!/bin/bash
+            set -e
 
-      sh '''
-        #!/bin/bash
-        set -e
+            echo "====== 🚀 Git Push Stage ======"
 
-        echo "====== 🚀 Git Push Stage ======"
+            git config user.email "jenkins@local"
+            git config user.name "Jenkins"
 
-        git config user.email "jenkins@local"
-        git config user.name "Jenkins"
+            git checkout -B main
 
-        git checkout -B main
+            echo "Current branch:"
+            git branch
 
-        echo "Current branch:"
-        git branch
+            if [ -z "$GIT_USER" ]; then
+              echo "❌ GIT_USER missing"
+              exit 1
+            fi
 
-        if [ -z "$GIT_USER" ]; then
-          echo "❌ GIT_USER missing"
-          exit 1
-        fi
+            if [ -z "$GIT_TOKEN" ]; then
+              echo "❌ GIT_TOKEN missing"
+              exit 1
+            fi
 
-        if [ -z "$GIT_TOKEN" ]; then
-          echo "❌ GIT_TOKEN missing"
-          exit 1
-        fi
+            echo "✅ GitHub credentials loaded"
 
-        echo "✅ GitHub credentials loaded"
+            git remote set-url origin \
+            https://${GIT_USER}:${GIT_TOKEN}@github.com/subham601/intelligent-devops-platform.git
 
-        git remote set-url origin \
-        https://${GIT_USER}:${GIT_TOKEN}@github.com/subham601/intelligent-devops-platform.git
+            git fetch origin
 
-        git fetch origin
+            git pull --rebase origin main || true
 
-        git pull --rebase origin main || true
+            echo "Recent commits:"
+            git log --oneline -5
 
-        echo "Recent commits:"
-        git log --oneline -5
+            echo "Pushing commit..."
+            git push origin HEAD:main
 
-        echo "Pushing commit..."
-        git push origin HEAD:main
-
-        echo "✅ Git Push Successful"
-      '''
+            echo "✅ Git Push Successful"
+          '''
+        }
+      }
     }
-  }
-}
 
     stage('Deployment Verification') {
       steps {
@@ -341,7 +339,7 @@ pipeline {
       }
     }
     always {
-    script {
+      script {
         echo ""
         echo "╔════════════════════════════════════════╗"
         echo "║   📊 BUILD SUMMARY                     ║"
@@ -350,6 +348,10 @@ pipeline {
         echo "Build Number: #${env.BUILD_NUMBER}"
         echo "Build Duration: ${currentBuild.durationString}"
 
-        sh 'echo "Timestamp: $(date)"'
+        sh '''
+          echo "Timestamp: $(date)"
+        '''
+      }
     }
+  }
 }
