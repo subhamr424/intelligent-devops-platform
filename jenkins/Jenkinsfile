@@ -339,17 +339,10 @@ pipeline {
       }
     }
     always {
-  sh '''#!/bin/bash    // ✅ साफ तरीके से bash बताया
-
+  sh '''#!/bin/bash
+set +e
+BUILD_STATUS="${BUILD_RESULT}"
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
-
-echo ""
-echo "======================================"
-echo "         BUILD SUMMARY"
-echo "======================================"
-echo "Build Status: SUCCESS"
-echo "Build Number: #${BUILD_NUMBER}"
 echo "Timestamp: ${TIMESTAMP}"
-echo "======================================"
   '''
 }
