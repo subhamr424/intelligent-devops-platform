@@ -36,8 +36,8 @@ pipeline {
         sh '''
           git checkout -B main origin/main
 
-          echo "====== 📦 Checkout Stage ======"
-          echo "✅ Repository checked out successfully"
+          echo "====== Checkout Stage ======"
+          echo "Repository checked out successfully"
           echo "Current branch: $(git rev-parse --abbrev-ref HEAD)"
           echo "Latest commit: $(git log -1 --oneline)"
           echo ""
@@ -48,9 +48,9 @@ pipeline {
     stage('Automatic Version Increment') {
       steps {
         sh '''
-          echo "====== 📝 Version Increment ======"
+          echo "====== Version Increment ======"
           ./scripts/update-image-tag.sh
-          echo "✅ Version updated successfully"
+          echo "Version updated successfully"
           echo ""
         '''
       }
@@ -59,9 +59,9 @@ pipeline {
     stage('Build Backend') {
       steps {
         sh '''
-          echo "====== 🔨 Build Backend Stage ======"
+          echo "====== Build Backend Stage ======"
           make build
-          echo "✅ Backend build completed"
+          echo "Backend build completed"
           echo ""
         '''
       }
@@ -70,9 +70,9 @@ pipeline {
     stage('Run Tests') {
       steps {
         sh '''
-          echo "====== ✔️  Test Stage ======"
+          echo "====== Test Stage ======"
           make test
-          echo "✅ Tests completed"
+          echo "Tests completed"
           echo ""
         '''
       }
@@ -83,16 +83,11 @@ pipeline {
         SONARQUBE_TOKEN = credentials("sonarqube-token")
       }
       steps {
-        sh '''
-          echo "====== 🔍 SonarQube Scan Stage ======"
-        '''
+        sh 'echo "====== SonarQube Scan Stage ======"'
         withSonarQubeEnv('sonarqube') {
           sh 'mvn -q -f backend/pom.xml sonar:sonar -DskipTests=true -Dsonar.login="$SONARQUBE_TOKEN"'
         }
-        sh '''
-          echo "✅ SonarQube scan completed"
-          echo ""
-        '''
+        sh 'echo "SonarQube scan completed" && echo ""'
       }
     }
 
@@ -101,16 +96,11 @@ pipeline {
         SONARQUBE_TOKEN = credentials("sonarqube-token")
       }
       steps {
-        sh '''
-          echo "====== 🎯 Sonar Quality Gate Stage ======"
-        '''
+        sh 'echo "====== Sonar Quality Gate Stage ======"'
         withSonarQubeEnv('sonarqube') {
           sh 'mvn -q -f backend/pom.xml sonar:sonar -DskipTests=true -Dsonar.login="$SONARQUBE_TOKEN" -Dsonar.qualitygate.wait=true'
         }
-        sh '''
-          echo "✅ Quality gate passed"
-          echo ""
-        '''
+        sh 'echo "Quality gate passed" && echo ""'
       }
     }
 
@@ -120,14 +110,14 @@ pipeline {
       }
       steps {
         sh '''
-          echo "====== 🛡️  OWASP Dependency Check ======"
+          echo "====== OWASP Dependency Check ======"
           echo "Running OWASP Dependency Check..."
           mkdir -p /tmp/nvd-cache
           mvn -f backend/pom.xml -DskipTests \
           -Ddependency-check.data.directory=/tmp/nvd-cache \
           -Dnvd.api.key=${NVD_API_KEY} \
           dependency-check:check || true
-          echo "✅ OWASP check completed"
+          echo "OWASP check completed"
           echo ""
         '''
       }
@@ -136,11 +126,11 @@ pipeline {
     stage('Trivy Scan') {
       steps {
         sh '''
-          echo "====== 🔐 Trivy Security Scan ======"
+          echo "====== Trivy Security Scan ======"
           echo "Running Trivy Scan..."
-          trivy --version || echo "⚠️  Trivy not installed"
+          trivy --version || echo "Trivy not installed"
           trivy fs --exit-code 0 --severity HIGH,CRITICAL --ignore-unfixed backend frontend || true
-          echo "✅ Trivy scan completed"
+          echo "Trivy scan completed"
           echo ""
         '''
       }
@@ -149,9 +139,9 @@ pipeline {
     stage('Docker Build Backend') {
       steps {
         sh '''
-          echo "====== 🐳 Docker Build Backend ======"
+          echo "====== Docker Build Backend ======"
           ./scripts/build.sh backend
-          echo "✅ Docker image built successfully"
+          echo "Docker image built successfully"
           echo ""
         '''
       }
@@ -160,9 +150,9 @@ pipeline {
     stage('Docker Build Frontend') {
       steps {
         sh '''
-          echo "====== 🐳 Docker Build Frontend ======"
+          echo "====== Docker Build Frontend ======"
           ./scripts/build.sh frontend
-          echo "✅ Docker image built successfully"
+          echo "Docker image built successfully"
           echo ""
         '''
       }
@@ -176,10 +166,10 @@ pipeline {
           passwordVariable: 'DOCKERHUB_PASS'
         )]) {
           sh '''
-            echo "====== 📤 Docker Push Backend ======"
+            echo "====== Docker Push Backend ======"
             echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin docker.io
             ./scripts/deploy.sh push-backend
-            echo "✅ Backend image pushed to Docker Hub"
+            echo "Backend image pushed to Docker Hub"
             echo ""
           '''
         }
@@ -194,10 +184,10 @@ pipeline {
           passwordVariable: 'DOCKERHUB_PASS'
         )]) {
           sh '''
-            echo "====== 📤 Docker Push Frontend ======"
+            echo "====== Docker Push Frontend ======"
             echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin docker.io
             ./scripts/deploy.sh push-frontend
-            echo "✅ Frontend image pushed to Docker Hub"
+            echo "Frontend image pushed to Docker Hub"
             echo ""
           '''
         }
@@ -207,9 +197,9 @@ pipeline {
     stage('Update Helm values.yaml') {
       steps {
         sh '''
-          echo "====== 📋 Helm Values Check ======"
+          echo "====== Helm Values Check ======"
           git diff --exit-code -- helm/intelligent-platform/values.yaml || true
-          echo "✅ Helm values checked"
+          echo "Helm values checked"
           echo ""
         '''
       }
@@ -218,13 +208,13 @@ pipeline {
     stage('Git Commit') {
       steps {
         sh '''
-          echo "====== 💾 Git Commit ======"
+          echo "====== Git Commit ======"
           git config user.email "jenkins@local"
           git config user.name "Jenkins"
 
           git add helm/intelligent-platform/values.yaml
-          git commit -m "chore(ci): bump image tags" || echo "ℹ️  No changes to commit"
-          echo "✅ Git commit completed"
+          git commit -m "chore(ci): bump image tags" || echo "No changes to commit"
+          echo "Git commit completed"
           echo ""
         '''
       }
@@ -241,7 +231,7 @@ pipeline {
             #!/bin/bash
             set -e
 
-            echo "====== 🚀 Git Push Stage ======"
+            echo "====== Git Push Stage ======"
 
             git config user.email "jenkins@local"
             git config user.name "Jenkins"
@@ -252,16 +242,16 @@ pipeline {
             git branch
 
             if [ -z "$GIT_USER" ]; then
-              echo "❌ GIT_USER missing"
+              echo "GIT_USER missing"
               exit 1
             fi
 
             if [ -z "$GIT_TOKEN" ]; then
-              echo "❌ GIT_TOKEN missing"
+              echo "GIT_TOKEN missing"
               exit 1
             fi
 
-            echo "✅ GitHub credentials loaded"
+            echo "GitHub credentials loaded"
 
             git remote set-url origin \
             https://${GIT_USER}:${GIT_TOKEN}@github.com/subham601/intelligent-devops-platform.git
@@ -276,7 +266,7 @@ pipeline {
             echo "Pushing commit..."
             git push origin HEAD:main
 
-            echo "✅ Git Push Successful"
+            echo "Git Push Successful"
           '''
         }
       }
@@ -284,9 +274,7 @@ pipeline {
 
     stage('Deployment Verification') {
       steps {
-        sh '''
-          echo "====== 🔍 Deployment Verification ======"
-        '''
+        sh 'echo "====== Deployment Verification ======"'
         withEnv(['KUBECONFIG=/root/.kube/config']) {
           sh '''
             echo "Checking rollout status..."
@@ -295,7 +283,7 @@ pipeline {
             echo ""
             echo "Pod details:"
             kubectl get pods -n intelligent-platform -l app.kubernetes.io/name=intelligent-platform -o wide || true
-            echo "✅ Deployment verification completed"
+            echo "Deployment verification completed"
             echo ""
           '''
         }
@@ -308,13 +296,13 @@ pipeline {
       }
       steps {
         script {
-          def msg = "✅ Build #${env.BUILD_NUMBER} SUCCESS: intelligent-devops-platform"
+          def msg = "Build #${env.BUILD_NUMBER} SUCCESS: intelligent-devops-platform"
           sh '''
-            echo "====== 📢 Slack Notification ======"
+            echo "====== Slack Notification ======"
             curl -X POST -H 'Content-type: application/json' \
             --data '{"text":"''' + msg + '''"}' \
             ${SLACK_WEBHOOK} || true
-            echo "✅ Notification sent"
+            echo "Notification sent"
             echo ""
           '''
         }
@@ -328,21 +316,18 @@ pipeline {
   post {
     failure {
       script {
-        def msg = "❌ Build #${env.BUILD_NUMBER} FAILED: intelligent-devops-platform"
+        def msg = "Build #${env.BUILD_NUMBER} FAILED: intelligent-devops-platform"
         sh '''
-          echo "====== 📢 Slack Failure Notification ======"
+          echo "====== Slack Failure Notification ======"
           curl -X POST -H 'Content-type: application/json' \
           --data '{"text":"''' + msg + '''"}' \
           ${SLACK_WEBHOOK} || true
-          echo "❌ Failure notification sent"
+          echo "Failure notification sent"
         '''
       }
     }
     always {
-  sh '''#!/bin/bash
-set +e
-BUILD_STATUS="${BUILD_RESULT}"
-TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
-echo "Timestamp: ${TIMESTAMP}"
-  '''
+      sh 'echo "====== BUILD COMPLETED ======"; echo "Timestamp: $(date)"; echo ""'
+    }
+  }
 }
