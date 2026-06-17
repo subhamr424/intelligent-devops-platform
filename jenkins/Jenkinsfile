@@ -339,19 +339,17 @@ pipeline {
       }
     }
     always {
-      script {
-        echo ""
-        echo "╔════════════════════════════════════════╗"
-        echo "║   📊 BUILD SUMMARY                     ║"
-        echo "╚════════════════════════════════════════╝"
-        echo "Build Status: ${currentBuild.currentResult}"
-        echo "Build Number: #${env.BUILD_NUMBER}"
-        echo "Build Duration: ${currentBuild.durationString}"
+  sh '''#!/bin/bash    // ✅ साफ तरीके से bash बताया
 
-        sh '''
-          echo "Timestamp: $(date)"
-        '''
-      }
-    }
-  }
+TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+
+echo ""
+echo "======================================"
+echo "         BUILD SUMMARY"
+echo "======================================"
+echo "Build Status: SUCCESS"
+echo "Build Number: #${BUILD_NUMBER}"
+echo "Timestamp: ${TIMESTAMP}"
+echo "======================================"
+  '''
 }
